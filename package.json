@@ -1,0 +1,32 @@
+{
+  "name": "packet-socket",
+  "version": "0.0.1",
+  "description": "Node.js package implementing socket for receiving OSI layer 2 packets",
+  "main": "socket.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/piskorzj/node-packet-socket.git"
+  },
+  "keywords": [
+    "packet",
+    "AF_PACKET",
+    "ethernet",
+    "OSI",
+    "layer",
+    "2",
+    "SOCK_RAW",
+    "SOCK_DGRAM"
+  ],
+  "author": "Jakub Piskorz <piskorzj@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/piskorzj/node-packet-socket/issues"
+  },
+  "homepage": "https://github.com/piskorzj/node-packet-socket#readme",
+  "dependencies": {
+    "nan": "^2.3.3"
+  }
+}
