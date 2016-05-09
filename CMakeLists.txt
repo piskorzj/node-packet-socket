@@ -25,7 +25,7 @@ set(MOCKS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cc_mocks)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 set(MODULES
-  
+  socket
 )
 
 enable_testing()
