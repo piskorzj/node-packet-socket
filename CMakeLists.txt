@@ -22,17 +22,21 @@ set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(TESTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cc_tests)
 set(MOCKS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/cc_mocks)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 set(MODULES
   
 )
 
 enable_testing()
 
-
+#LOOP OVER MODULES
 set(TEST_TARGETS)
 foreach(MODULE ${MODULES})
   list(APPEND TEST_TARGETS test_${MODULE})
+  add_module(${MODULE})
 endforeach(MODULE)
+
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -VV
   DEPENDS ${TEST_TARGETS})
 
