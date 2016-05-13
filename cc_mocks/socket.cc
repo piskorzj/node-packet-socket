@@ -25,3 +25,10 @@ int Socket::receive_message(unsigned char *source_address,
 			.withIntParameter("buffer_size", buffer_size)
 			.returnIntValue();
 }
+
+void Socket::add_membership(Socket::MembershipType type,
+		const unsigned char *multicast_address) {
+		mock().actualCall("add_membership").onObject(this)
+			.withIntParameter("type", type)
+			.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+}

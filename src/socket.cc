@@ -111,3 +111,24 @@ int Socket::receive_message(unsigned char *source_address,
 
 	return received_bytes - sizeof(header);
 }
+
+void Socket::manage_membership(Socket::MembershipAction action,
+			Socket::MembershipType type, const unsigned char *multicast_address) {
+	struct packet_mreq multireq;
+	memset(&multireq, 0, sizeof(multireq));
+	multireq.mr_ifindex = interface_index;
+	multireq.mr_type = type;
+	if(type == Socket::MULTICAST) {
+		multireq.mr_alen = ETHER_ADDR_LEN;
+		memcpy(multireq.mr_address, multicast_address, ETHER_ADDR_LEN);
+	}
+
+	if(setsockopt(socket_descriptor, SOL_PACKET, action,
+			&multireq, sizeof(multireq)) == -1)
+		throw std::runtime_error(strerror(errno));
+}
+
+void Socket::add_membership(Socket::MembershipType type,
+		const unsigned char *multicast_address) {
+	manage_membership(Socket::ADD_MEMBERSHIP, type, multicast_address);
+}

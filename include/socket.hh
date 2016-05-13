@@ -19,6 +19,14 @@ public:
 			const char *message, int message_length);
 	int receive_message(unsigned char *source_address,
 			char *buffer, int buffer_size);
+
+	enum MembershipType {
+		MULTICAST = PACKET_MR_MULTICAST,
+		PROMISCIOUS = PACKET_MR_PROMISC,
+		ALL_MULTICAST = PACKET_MR_ALLMULTI
+	};
+
+	void add_membership(Socket::MembershipType type, const unsigned char *multicast_address);
 private:
 	std::string device_name;
 	int socket_descriptor;
@@ -27,6 +35,14 @@ private:
 
 	Socket(const Socket& that);
 	Socket& operator=(const Socket& that);
+
+	enum MembershipAction {
+		ADD_MEMBERSHIP = PACKET_ADD_MEMBERSHIP,
+		DROP_MEMBERSHIP = PACKET_DROP_MEMBERSHIP
+	};
+
+	void manage_membership(Socket::MembershipAction action,
+			Socket::MembershipType type, const unsigned char *multicast_address);
 };
 
 #endif

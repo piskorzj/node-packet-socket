@@ -78,6 +78,16 @@ extern "C" {
 				->withUnsignedIntParameters("message_size", __message->msg_iov[1].iov_len);
 		return mock_c()->returnUnsignedIntValueOrDefault(1);
 	}
+	int setsockopt (int __fd, int __level, int __optname,
+			       const void *__optval, socklen_t __optlen) {
+		mock_c()->actualCall("setsockopt")
+				->withIntParameters("fd", __fd)
+				->withIntParameters("level", __level)
+				->withIntParameters("optname", __optname)
+				->withMemoryBufferParameter("optval", (const unsigned char *)__optval, __optlen)
+				->withUnsignedIntParameters("optlen", __optlen);
+		return mock_c()->returnIntValueOrDefault(0);
+	}
 }
 
 TEST_GROUP(SocketInit) {
@@ -267,6 +277,63 @@ TEST(SocketUsage, RecvShouldCallRecvmsg) {
 
 	MEMCMP_EQUAL(source_address, from_addres, ETHER_ADDR_LEN);
 	MEMCMP_EQUAL(mocked_message, receive_buffer, received_bytes);
+}
+
+TEST(SocketUsage, AddMembershipShouldThrowOnSetsockoptFail) {
+	const unsigned char multicast_address[] = {0xaa, 0xab, 0, 0, 0xff, 0xff};
+	Socket::MembershipType type = Socket::PROMISCIOUS;
+
+	mock().expectOneCall("setsockopt")
+			.ignoreOtherParameters()
+			.andReturnValue(-1);
+	CHECK_THROWS(std::runtime_error,
+			socket->add_membership(type, multicast_address));
+}
+TEST(SocketUsage, AddMembershipShouldUseMRAddressOnlyMULTICASTType) {
+	const unsigned char multicast_address[] = {0xaa, 0xab, 0, 0, 0xff, 0xff};
+	Socket::MembershipType type = Socket::PROMISCIOUS;
+	struct packet_mreq multireq;
+	memset(&multireq, 0, sizeof(multireq));
+	multireq.mr_ifindex = this->socket_index;
+	multireq.mr_type = type;
+
+	mock().expectOneCall("setsockopt")
+			.withIntParameter("fd", this->socket_descriptor)
+			.withIntParameter("level", SOL_PACKET)
+			.withIntParameter("optname", PACKET_ADD_MEMBERSHIP)
+			.withMemoryBufferParameter("optval", (const unsigned char *)&multireq, sizeof(multireq))
+			.withUnsignedIntParameter("optlen", sizeof(multireq))
+			.andReturnValue(0);
+
+	try {
+		socket->add_membership(type, multicast_address);
+	} catch(...) {
+		FAIL("Catched error");
+	}
+}
+TEST(SocketUsage, AddMembershipShouldCallSetsockopt) {
+	const unsigned char multicast_address[] = {0xaa, 0xab, 0, 0, 0xff, 0xff};
+	Socket::MembershipType type = Socket::MULTICAST;
+	struct packet_mreq multireq;
+	memset(&multireq, 0, sizeof(multireq));
+	multireq.mr_ifindex = this->socket_index;
+	multireq.mr_type = type;
+	multireq.mr_alen = ETHER_ADDR_LEN;
+	memcpy(multireq.mr_address, multicast_address, ETHER_ADDR_LEN);
+
+	mock().expectOneCall("setsockopt")
+			.withIntParameter("fd", this->socket_descriptor)
+			.withIntParameter("level", SOL_PACKET)
+			.withIntParameter("optname", PACKET_ADD_MEMBERSHIP)
+			.withMemoryBufferParameter("optval", (const unsigned char *)&multireq, sizeof(multireq))
+			.withUnsignedIntParameter("optlen", sizeof(multireq))
+			.andReturnValue(0);
+
+	try {
+		socket->add_membership(type, multicast_address);
+	} catch(...) {
+		FAIL("Catched error");
+	}
 }
 
 int main(int ac, char** av) {
