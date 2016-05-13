@@ -48,3 +48,36 @@ Socket::~Socket() {
 int Socket::get_descriptor(void) {
 	return socket_descriptor;
 }
+
+int Socket::send_message(const unsigned char *destination_address,
+		const char *message, int message_length) {
+
+	struct sockaddr_ll addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sll_family = AF_PACKET;
+	addr.sll_ifindex = interface_index;
+	addr.sll_halen = ETHER_ADDR_LEN;
+	addr.sll_protocol = htons(ETH_P_802_3);
+	memcpy(addr.sll_addr, hardware_address, ETHER_ADDR_LEN);
+
+	size_t msg_length = sizeof(struct ether_header) + message_length;
+	char *msg_buffer = new char[msg_length];
+	struct ether_header *header = (struct ether_header *)msg_buffer;
+	memcpy(header->ether_dhost, destination_address, ETHER_ADDR_LEN);
+	memcpy(header->ether_shost, hardware_address, ETHER_ADDR_LEN);
+	header->ether_type = htons(message_length);
+	char *payload = msg_buffer + sizeof(struct ether_header);
+	memcpy(payload, message, message_length);
+
+	int rc = sendto(socket_descriptor, msg_buffer, msg_length, 0,
+			(struct sockaddr *)&addr, sizeof(addr));
+	delete [] msg_buffer;
+
+	if(rc == -1)
+		throw std::runtime_error(strerror(errno));
+
+	if((size_t) rc != msg_length)
+		throw std::runtime_error("Failed to send entire packet");
+
+	return message_length;
+}

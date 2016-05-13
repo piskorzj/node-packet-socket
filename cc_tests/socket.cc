@@ -42,6 +42,18 @@ extern "C" {
 				->withOutputParameter("hardware_address", ifr->ifr_hwaddr.sa_data);
 		return mock_c()->returnIntValueOrDefault(0);
 	}
+	ssize_t sendto (int __fd, const void *__buf, size_t __n,
+			       int __flags, __CONST_SOCKADDR_ARG __addr,
+			       socklen_t __addr_len) {
+		mock_c()->actualCall("sendto")
+				->withIntParameters("fd", __fd)
+				->withMemoryBufferParameter("buf", (const unsigned char *)__buf, __n)
+				->withUnsignedIntParameters("n", __n)
+				->withIntParameters("flags", __flags)
+				->withMemoryBufferParameter("addr", (const unsigned char *)__addr, __addr_len)
+				->withUnsignedIntParameters("addr_len", __addr_len);
+		return mock_c()->returnUnsignedIntValueOrDefault(__n);
+	}
 }
 
 TEST_GROUP(SocketInit) {
@@ -133,6 +145,60 @@ TEST_GROUP(SocketUsage) {
 
 TEST(SocketUsage, GetDescriptorShouldReturnDescriptor) {
 	LONGS_EQUAL(this->socket_descriptor, socket->get_descriptor());
+}
+
+TEST(SocketUsage, SendShouldThrowOnSendtoFail) {
+	unsigned char desitnation_address[] = {0xde, 0xad, 0, 0, 0xff, 0xff};
+	const char *message = "hello";
+	const int message_length = strlen(message);
+	mock().expectOneCall("sendto").ignoreOtherParameters().andReturnValue((unsigned int)-1);
+	CHECK_THROWS(std::runtime_error,
+			socket->send_message(desitnation_address, message, message_length));
+}
+TEST(SocketUsage, SendShouldThrowOnSendtoNotSendEntirePacket) {
+	unsigned char desitnation_address[] = {0xde, 0xad, 0, 0, 0xff, 0xff};
+	const char *message = "hello";
+	const int message_length = strlen(message);
+	mock().expectOneCall("sendto").ignoreOtherParameters().andReturnValue((unsigned int)3);
+	CHECK_THROWS(std::runtime_error,
+			socket->send_message(desitnation_address, message, message_length));
+}
+TEST(SocketUsage, SendShouldCallSendto) {
+	unsigned char desitnation_address[] = {0xde, 0xad, 0, 0, 0xff, 0xff};
+	const char *message = "hello";
+	const int message_length = strlen(message);
+
+	struct sockaddr_ll addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sll_family = AF_PACKET;
+	addr.sll_ifindex = this->socket_index;
+	addr.sll_halen = ETHER_ADDR_LEN;
+	addr.sll_protocol = htons(ETH_P_802_3);
+	memcpy(addr.sll_addr, this->address, ETHER_ADDR_LEN);
+
+	unsigned char send_buffer[2000];
+	int send_buffer_index = 0;
+	memcpy(send_buffer + send_buffer_index, desitnation_address, ETHER_ADDR_LEN);
+	send_buffer_index += ETHER_ADDR_LEN;
+	memcpy(send_buffer + send_buffer_index, this->address, ETHER_ADDR_LEN);
+	send_buffer_index += ETHER_ADDR_LEN;
+	*((uint16_t *) (send_buffer + send_buffer_index)) = htons(message_length);
+	send_buffer_index += 2;
+	memcpy(send_buffer + send_buffer_index, message, message_length);
+	send_buffer_index += message_length;
+
+	mock().expectOneCall("sendto")
+			.withIntParameter("fd", this->socket_descriptor)
+			.withMemoryBufferParameter("buf", send_buffer, send_buffer_index)
+			.withUnsignedIntParameter("n", send_buffer_index)
+			.withIntParameter("flags", 0)
+			.withMemoryBufferParameter("addr", (const unsigned char *)&addr, sizeof(addr))
+			.withUnsignedIntParameter("addr_len", sizeof(addr))
+			.andReturnValue(send_buffer_index);
+
+	int rc = socket->send_message(desitnation_address, message, message_length);
+
+	LONGS_EQUAL(message_length, rc);
 }
 
 int main(int ac, char** av) {

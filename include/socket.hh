@@ -14,6 +14,9 @@ public:
 	virtual ~Socket();
 
 	int get_descriptor(void);
+
+	int send_message(const unsigned char *destination_address,
+			const char *message, int message_length);
 private:
 	std::string device_name;
 	int socket_descriptor;
