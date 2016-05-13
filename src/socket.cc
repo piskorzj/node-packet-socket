@@ -132,3 +132,8 @@ void Socket::add_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
 	manage_membership(Socket::ADD_MEMBERSHIP, type, multicast_address);
 }
+
+void Socket::drop_membership(Socket::MembershipType type,
+		const unsigned char *multicast_address) {
+	manage_membership(Socket::DROP_MEMBERSHIP, type, multicast_address);
+}

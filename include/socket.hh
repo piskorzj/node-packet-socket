@@ -27,6 +27,7 @@ public:
 	};
 
 	void add_membership(Socket::MembershipType type, const unsigned char *multicast_address);
+	void drop_membership(Socket::MembershipType type, const unsigned char *multicast_address);
 private:
 	std::string device_name;
 	int socket_descriptor;
