@@ -16,3 +16,12 @@ int Socket::send_message(const unsigned char *destination_address,
 			.withMemoryBufferParameter("message", (const unsigned char*)message, message_length)
 			.returnIntValue();
 }
+
+int Socket::receive_message(unsigned char *source_address,
+			char *buffer, int buffer_size) {
+	return mock().actualCall("receive_message").onObject(this)
+			.withMemoryBufferParameter("source_address", source_address, ETHER_ADDR_LEN)
+			.withOutputParameter("buffer", buffer)
+			.withIntParameter("buffer_size", buffer_size)
+			.returnIntValue();
+}

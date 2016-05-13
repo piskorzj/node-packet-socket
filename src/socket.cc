@@ -81,3 +81,33 @@ int Socket::send_message(const unsigned char *destination_address,
 
 	return message_length;
 }
+
+int Socket::receive_message(unsigned char *source_address,
+			char *buffer, int buffer_size) {
+	struct sockaddr_ll addr;
+	memset(&addr, 0, sizeof(addr));
+	socklen_t addrlen = sizeof(addr);
+
+	struct ether_header header;
+
+	struct iovec msg_iov[2];
+	msg_iov[0].iov_base = &header;
+	msg_iov[0].iov_len = sizeof(header);
+	msg_iov[1].iov_base = buffer;
+	msg_iov[1].iov_len = buffer_size;
+	struct msghdr msg;
+	msg.msg_name = &addr;
+	msg.msg_namelen = addrlen;
+	msg.msg_flags = 0;
+	msg.msg_iov = msg_iov;
+	msg.msg_iovlen = 2;
+
+	int received_bytes = recvmsg(socket_descriptor, &msg, 0);
+
+	if(received_bytes == -1)
+		throw std::runtime_error(strerror(errno));
+
+	memcpy(source_address, addr.sll_addr, ETHER_ADDR_LEN);
+
+	return received_bytes - sizeof(header);
+}

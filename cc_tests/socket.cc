@@ -54,6 +54,30 @@ extern "C" {
 				->withUnsignedIntParameters("addr_len", __addr_len);
 		return mock_c()->returnUnsignedIntValueOrDefault(__n);
 	}
+	ssize_t recvfrom (int __fd, void *__restrict __buf, size_t __n,
+				 int __flags, __SOCKADDR_ARG __addr,
+				 socklen_t *__restrict __addr_len) {
+		mock_c()->actualCall("recvfrom")
+				->withIntParameters("fd", __fd)
+				->withOutputParameter("buf", __buf)
+				->withUnsignedIntParameters("n", __n)
+				->withIntParameters("flags", __flags)
+				->withOutputParameter("addr", __addr)
+				->withOutputParameter("addr_len", __addr_len);
+		return mock_c()->returnUnsignedIntValueOrDefault(1);
+	}
+	ssize_t recvmsg (int __fd, struct msghdr *__message, int __flags) {
+		mock_c()->actualCall("recvmsg")
+				->withIntParameters("fd", __fd)
+				->withIntParameters("flags", __flags)
+				->withUnsignedIntParameters("addr_len", __message->msg_namelen)
+				->withOutputParameter("addr", __message->msg_name)
+				->withOutputParameter("ethernet_header", __message->msg_iov[0].iov_base)
+				->withUnsignedIntParameters("ethernet_header_size", __message->msg_iov[0].iov_len)
+				->withOutputParameter("message", __message->msg_iov[1].iov_base)
+				->withUnsignedIntParameters("message_size", __message->msg_iov[1].iov_len);
+		return mock_c()->returnUnsignedIntValueOrDefault(1);
+	}
 }
 
 TEST_GROUP(SocketInit) {
@@ -199,6 +223,50 @@ TEST(SocketUsage, SendShouldCallSendto) {
 	int rc = socket->send_message(desitnation_address, message, message_length);
 
 	LONGS_EQUAL(message_length, rc);
+}
+
+TEST(SocketUsage, RecvShouldThrowOnRecvmsgFail) {
+	mock().expectOneCall("recvmsg").ignoreOtherParameters().andReturnValue((unsigned int)-1);
+	const int receive_buffer_size = 2000;
+	char receive_buffer[receive_buffer_size];
+	unsigned char from_addres[6];
+	CHECK_THROWS(std::runtime_error,
+			socket->receive_message(from_addres, receive_buffer, receive_buffer_size));
+}
+TEST(SocketUsage, RecvShouldCallRecvmsg) {
+	struct sockaddr_ll mocked_received_from_address;
+	unsigned char source_address[] = {0xde, 0xad, 0, 0, 0xff, 0xff};
+	memcpy(mocked_received_from_address.sll_addr, source_address, ETHER_ADDR_LEN);
+
+	const char *mocked_message = "hello";
+
+	struct ether_header ethernet_header;
+	ethernet_header.ether_type = htons(strlen(mocked_message));
+	memcpy(ethernet_header.ether_shost, source_address, ETHER_ADDR_LEN);
+	memcpy(ethernet_header.ether_dhost, this->address, ETHER_ADDR_LEN);
+
+	const int receive_buffer_size = 2000;
+	char receive_buffer[receive_buffer_size];
+	unsigned char from_addres[6];
+
+	mock().expectOneCall("recvmsg")
+			.withIntParameter("fd", this->socket_descriptor)
+			.withIntParameter("flags", 0)
+			.withUnsignedIntParameter("addr_len", sizeof (mocked_received_from_address))
+			.withOutputParameterReturning("addr", &mocked_received_from_address, sizeof(mocked_received_from_address))
+			.withOutputParameterReturning("ethernet_header", &ethernet_header, sizeof(ethernet_header))
+			.withUnsignedIntParameter("ethernet_header_size", sizeof(ethernet_header))
+			.withOutputParameterReturning("message", mocked_message, strlen(mocked_message))
+			.withUnsignedIntParameter("message_size", receive_buffer_size)
+			.andReturnValue((unsigned int)(strlen(mocked_message) + sizeof(ethernet_header)));
+
+	int received_bytes;
+
+
+	received_bytes = socket->receive_message(from_addres, receive_buffer, receive_buffer_size);
+
+	MEMCMP_EQUAL(source_address, from_addres, ETHER_ADDR_LEN);
+	MEMCMP_EQUAL(mocked_message, receive_buffer, received_bytes);
 }
 
 int main(int ac, char** av) {
