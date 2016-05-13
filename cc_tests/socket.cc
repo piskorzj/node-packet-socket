@@ -101,6 +101,40 @@ TEST(SocketInit, ConstructorShouldNotThrowOnSuccess) {
 	}
 }
 
+TEST_GROUP(SocketUsage) {
+	Socket *socket;
+	int socket_descriptor;
+	unsigned int socket_index;
+	unsigned char address[ETHER_ADDR_LEN];
+
+	void setup() {
+		socket_descriptor = 5;
+		socket_index = 12;
+		unsigned char _address[] = {0xde, 0xad, 0, 0, 0xbe, 0xef};
+		memcpy(address, _address, ETH_ALEN);
+
+		mock().expectOneCall("socket").ignoreOtherParameters().andReturnValue(socket_descriptor);
+		mock().expectNCalls(2, "fcntl").ignoreOtherParameters().andReturnValue(0);
+		mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFINDEX)
+				.withOutputParameterReturning("interface_index", &socket_index, sizeof(socket_index))
+				.ignoreOtherParameters().andReturnValue(0);
+		mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFHWADDR)
+				.withOutputParameterReturning("hardware_address", address, 6)
+				.ignoreOtherParameters().andReturnValue(0);
+		socket = new Socket("rfm0");
+	}
+	void teardown() {
+		mock().expectOneCall("close").withIntParameter("fd", socket_descriptor).andReturnValue(0);
+		delete socket;
+		mock().checkExpectations();
+		mock().clear();
+	}
+};
+
+TEST(SocketUsage, GetDescriptorShouldReturnDescriptor) {
+	LONGS_EQUAL(this->socket_descriptor, socket->get_descriptor());
+}
+
 int main(int ac, char** av) {
 	return CommandLineTestRunner::RunAllTests(ac, av);
 }

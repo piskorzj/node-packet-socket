@@ -44,3 +44,7 @@ Socket::Socket(const char * device) : device_name(device) {
 Socket::~Socket() {
 	close(socket_descriptor);
 }
+
+int Socket::get_descriptor(void) {
+	return socket_descriptor;
+}

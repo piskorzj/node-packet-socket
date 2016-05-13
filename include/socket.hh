@@ -13,6 +13,7 @@ public:
 	Socket(const char * device);
 	virtual ~Socket();
 
+	int get_descriptor(void);
 private:
 	std::string device_name;
 	int socket_descriptor;
