@@ -47,4 +47,7 @@ void Socket::drop_membership(Socket::MembershipType type,
 	mock().actualCall("drop_membership")
 		.withIntParameter("type", type)
 		.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced drop_membership failure");
+	}
 }
