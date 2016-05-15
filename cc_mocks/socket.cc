@@ -34,12 +34,12 @@ int Socket::receive_message(unsigned char *source_address,
 
 void Socket::add_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
-		mock().actualCall("add_membership")
-			.withIntParameter("type", type)
-			.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
-		if(!mock().returnBoolValueOrDefault(true)) {
-			throw std::runtime_error("forced add_membership failure");
-		}
+	mock().actualCall("add_membership")
+		.withIntParameter("type", type)
+		.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced add_membership failure");
+	}
 }
 
 void Socket::drop_membership(Socket::MembershipType type,
