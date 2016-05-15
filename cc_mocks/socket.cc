@@ -44,7 +44,7 @@ void Socket::add_membership(Socket::MembershipType type,
 
 void Socket::drop_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
-	mock().actualCall("drop_membership").onObject(this)
+	mock().actualCall("drop_membership")
 		.withIntParameter("type", type)
 		.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
 }
