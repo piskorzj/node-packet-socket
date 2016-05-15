@@ -120,6 +120,9 @@ bool Socket::is_valid_membership_type(Socket::MembershipType type) {
 
 void Socket::manage_membership(Socket::MembershipAction action,
 			Socket::MembershipType type, const unsigned char *multicast_address) {
+	if(!is_valid_membership_type(type))
+		throw std::invalid_argument("Invalid membership type");
+
 	struct packet_mreq multireq;
 	memset(&multireq, 0, sizeof(multireq));
 	multireq.mr_ifindex = interface_index;

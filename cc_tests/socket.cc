@@ -279,6 +279,12 @@ TEST(SocketUsage, RecvShouldCallRecvmsg) {
 	MEMCMP_EQUAL(mocked_message, receive_buffer, received_bytes);
 }
 
+TEST(SocketUsage, AddMembershipShouldThrowOnInvalidType) {
+	Socket::MembershipType type = static_cast<Socket::MembershipType>(123);
+	CHECK_THROWS(std::invalid_argument,
+				socket->add_membership(type, NULL));
+}
+
 TEST(SocketUsage, AddMembershipShouldThrowOnSetsockoptFail) {
 	const unsigned char multicast_address[] = {0xaa, 0xab, 0, 0, 0xff, 0xff};
 	Socket::MembershipType type = Socket::PROMISCIOUS;
@@ -334,6 +340,12 @@ TEST(SocketUsage, AddMembershipShouldCallSetsockopt) {
 	} catch(...) {
 		FAIL("Catched error");
 	}
+}
+
+TEST(SocketUsage, DropMembershipShouldThrowOnInvalidType) {
+	Socket::MembershipType type = static_cast<Socket::MembershipType>(123);
+	CHECK_THROWS(std::invalid_argument,
+				socket->drop_membership(type, NULL));
 }
 
 TEST(SocketUsage, DropMembershipShouldThrowOnSetsockoptFail) {
