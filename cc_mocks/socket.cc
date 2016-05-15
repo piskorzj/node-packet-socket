@@ -2,7 +2,11 @@
 #include "socket.hh"
 
 Socket::Socket(const char * device) {
-	(void)device;
+	mock().actualCall("socket_constructor")
+			.withStringParameter("device", device);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced creation failure");
+	}
 }
 
 Socket::~Socket() {}
