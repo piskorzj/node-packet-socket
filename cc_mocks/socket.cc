@@ -2,13 +2,17 @@
 #include "socket.hh"
 
 Socket::Socket(const char * device) {
-	(void)device;
+	mock().actualCall("socket_constructor")
+			.withStringParameter("device", device);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced creation failure");
+	}
 }
 
 Socket::~Socket() {}
 
 int Socket::get_descriptor(void) {
-	return mock().actualCall("get_descriptor").onObject(this).returnIntValue();
+	return mock().actualCall("get_descriptor").returnIntValue();
 }
 
 int Socket::send_message(const unsigned char *destination_address,
@@ -30,14 +34,20 @@ int Socket::receive_message(unsigned char *source_address,
 
 void Socket::add_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
-		mock().actualCall("add_membership").onObject(this)
-			.withIntParameter("type", type)
-			.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+	mock().actualCall("add_membership")
+		.withIntParameter("type", type)
+		.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced add_membership failure");
+	}
 }
 
 void Socket::drop_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
-	mock().actualCall("drop_membership").onObject(this)
+	mock().actualCall("drop_membership")
 		.withIntParameter("type", type)
 		.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+	if(!mock().returnBoolValueOrDefault(true)) {
+		throw std::runtime_error("forced drop_membership failure");
+	}
 }
