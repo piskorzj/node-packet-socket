@@ -37,6 +37,18 @@ foreach(MODULE ${MODULES})
   add_module(${MODULE})
 endforeach(MODULE)
 
+add_custom_target(build_node_gyp COMMAND node-gyp build
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_custom_target(run_wrapper_test
+  COMMAND node -e "process.exitCode = require('./build/Release/test_wrapper.node').Run('', '-v', '-c')"
+  DEPENDS build_node_gyp
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  VERBATIM)
+
+add_custom_target(run_all_node_tests
+  DEPENDS run_wrapper_test)
+
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -VV
-  DEPENDS ${TEST_TARGETS})
+  DEPENDS ${TEST_TARGETS} run_all_node_tests)
 
