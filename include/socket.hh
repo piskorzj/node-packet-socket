@@ -15,6 +15,8 @@ public:
 
 	int get_descriptor(void);
 
+	const static int ADDRESS_LENGHT = ETHER_ADDR_LEN;
+
 	int send_message(const unsigned char *destination_address,
 			const char *message, int message_length);
 	int receive_message(unsigned char *source_address,

@@ -12,7 +12,7 @@ Socket::Socket(const char * device) {
 Socket::~Socket() {}
 
 int Socket::get_descriptor(void) {
-	return mock().actualCall("get_descriptor").onObject(this).returnIntValue();
+	return mock().actualCall("get_descriptor").returnIntValue();
 }
 
 int Socket::send_message(const unsigned char *destination_address,
@@ -34,9 +34,12 @@ int Socket::receive_message(unsigned char *source_address,
 
 void Socket::add_membership(Socket::MembershipType type,
 		const unsigned char *multicast_address) {
-		mock().actualCall("add_membership").onObject(this)
+		mock().actualCall("add_membership")
 			.withIntParameter("type", type)
 			.withMemoryBufferParameter("multicast_address", multicast_address, ETHER_ADDR_LEN);
+		if(!mock().returnBoolValueOrDefault(true)) {
+			throw std::runtime_error("forced add_membership failure");
+		}
 }
 
 void Socket::drop_membership(Socket::MembershipType type,

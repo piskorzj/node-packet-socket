@@ -15,6 +15,8 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	tpl->SetClassName(Nan::New("Wrapper").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
+	Nan::SetPrototypeMethod(tpl, "AddMembership", AddMembership);
+
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
 			Nan::GetFunction(tpl).ToLocalChecked());
@@ -75,6 +77,34 @@ NAN_METHOD(Wrapper::New) {
 			return;
 		}
 		info.GetReturnValue().Set(constructed_object.ToLocalChecked());
+	}
+}
+
+NAN_METHOD(Wrapper::AddMembership) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+	Nan::MaybeLocal<v8::Value> type_or_addr_maybe = info[0];
+	if(type_or_addr_maybe.IsEmpty())
+		return Nan::ThrowError("Missing type or address argument");
+	v8::Local<v8::Value> type_or_addr = type_or_addr_maybe.ToLocalChecked();
+
+	unsigned char *address = NULL;
+	Socket::MembershipType type = Socket::MULTICAST;
+
+	if(node::Buffer::HasInstance(type_or_addr)) {
+		if(node::Buffer::Length(type_or_addr) < Socket::ADDRESS_LENGHT) {
+			return Nan::ThrowTypeError("Invalid address length");
+		}
+		address = reinterpret_cast<unsigned char *>(node::Buffer::Data(type_or_addr));
+	} else if(type_or_addr->IsNumber()) {
+		type = static_cast<Socket::MembershipType>(Nan::To<int>(type_or_addr).FromJust());
+	} else {
+		return Nan::ThrowTypeError("Invalid argument");
+	}
+
+	try {
+		obj->socket->add_membership(type, address);
+	} catch(const std::exception &e) {
+		return Nan::ThrowError(e.what());
 	}
 }
 
