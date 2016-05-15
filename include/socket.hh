@@ -42,6 +42,8 @@ private:
 		DROP_MEMBERSHIP = PACKET_DROP_MEMBERSHIP
 	};
 
+	static bool is_valid_membership_type(Socket::MembershipType type);
+
 	void manage_membership(Socket::MembershipAction action,
 			Socket::MembershipType type, const unsigned char *multicast_address);
 };

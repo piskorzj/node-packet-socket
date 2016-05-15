@@ -112,6 +112,12 @@ int Socket::receive_message(unsigned char *source_address,
 	return received_bytes - sizeof(header);
 }
 
+bool Socket::is_valid_membership_type(Socket::MembershipType type) {
+	return (type == Socket::MULTICAST ||
+			type == Socket::PROMISCIOUS ||
+			type == Socket::ALL_MULTICAST);
+}
+
 void Socket::manage_membership(Socket::MembershipAction action,
 			Socket::MembershipType type, const unsigned char *multicast_address) {
 	struct packet_mreq multireq;
