@@ -18,6 +18,7 @@ public:
 	static NAN_METHOD(New);
 
 	static NAN_METHOD(AddMembership);
+	static NAN_METHOD(DropMembership);
 };
 
 #endif

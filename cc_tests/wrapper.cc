@@ -307,6 +307,131 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailWithTypeOutOfRange) {
 	}
 }
 
+TEST(WrapperUsageGroup, DropMembershipShouldFailOnEmptyArguments) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	v8::Local<v8::Value> argv[] = {};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", 0, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldFailOnNoAddressOrNonTypeArguments) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::EmptyString()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldFailOnToShortAddressArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::NewBuffer(4).ToLocalChecked()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithAddress) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];
+	memcpy(address_for_node_buffer, address, Socket::ADDRESS_LENGHT);
+	v8::Local<v8::Value> argv[argc] = {Nan::NewBuffer(address_for_node_buffer, 6).ToLocalChecked()};
+
+	mock().expectOneCall("drop_membership")
+			.withIntParameter("type", Socket::MULTICAST)
+			.withMemoryBufferParameter("multicast_address", address, Socket::ADDRESS_LENGHT)
+			.andReturnValue(false);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithAddress) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];
+	memcpy(address_for_node_buffer, address, Socket::ADDRESS_LENGHT);
+	v8::Local<v8::Value> argv[argc] = {Nan::NewBuffer(address_for_node_buffer, 6).ToLocalChecked()};
+
+	mock().expectOneCall("drop_membership")
+			.withIntParameter("type", Socket::MULTICAST)
+			.withMemoryBufferParameter("multicast_address", address, Socket::ADDRESS_LENGHT)
+			.andReturnValue(true);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("DropMembership did threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithType) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
+
+	mock().expectOneCall("drop_membership")
+			.withIntParameter("type", Socket::PROMISCIOUS)
+			.ignoreOtherParameters()
+			.andReturnValue(false);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithType) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
+
+	mock().expectOneCall("drop_membership")
+			.withIntParameter("type", Socket::PROMISCIOUS)
+			.ignoreOtherParameters()
+			.andReturnValue(true);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("DropMembership did threw");
+	}
+}
+
+TEST(WrapperUsageGroup, DropMembershipShouldFailWithTypeOutOfRange) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::New(123)};
+
+	mock().expectOneCall("drop_membership")
+				.ignoreOtherParameters()
+				.andReturnValue(false);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "DropMembership", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("DropMembership didn't threw");
+	}
+}
+
 NAN_METHOD(Run) {
 	int argc = info.Length();
 	char ** argv = new char*[argc];
