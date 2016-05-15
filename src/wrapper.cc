@@ -81,28 +81,36 @@ NAN_METHOD(Wrapper::New) {
 	}
 }
 
-NAN_METHOD(Wrapper::AddMembership) {
-	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+void Wrapper::ParseMembershipArguments(
+			Nan::NAN_METHOD_ARGS_TYPE info,
+			Socket::MembershipType *type,
+			unsigned char **address) {
+	Nan::HandleScope scope;
 	Nan::MaybeLocal<v8::Value> type_or_addr_maybe = info[0];
-	if(type_or_addr_maybe.IsEmpty())
-		return Nan::ThrowError("Missing type or address argument");
+
+	if(info.Length() == 0 || type_or_addr_maybe.IsEmpty())
+		throw std::invalid_argument("Missing type or address argument");
 	v8::Local<v8::Value> type_or_addr = type_or_addr_maybe.ToLocalChecked();
 
-	unsigned char *address = NULL;
-	Socket::MembershipType type = Socket::MULTICAST;
-
 	if(node::Buffer::HasInstance(type_or_addr)) {
-		if(node::Buffer::Length(type_or_addr) < Socket::ADDRESS_LENGHT) {
-			return Nan::ThrowTypeError("Invalid address length");
-		}
-		address = reinterpret_cast<unsigned char *>(node::Buffer::Data(type_or_addr));
+		if(node::Buffer::Length(type_or_addr) < Socket::ADDRESS_LENGHT)
+			throw std::invalid_argument("Invalid address length");
+		*address = reinterpret_cast<unsigned char *>(node::Buffer::Data(type_or_addr));
 	} else if(type_or_addr->IsNumber()) {
-		type = static_cast<Socket::MembershipType>(Nan::To<int>(type_or_addr).FromJust());
+		*type = static_cast<Socket::MembershipType>(Nan::To<int>(type_or_addr).FromJust());
 	} else {
-		return Nan::ThrowTypeError("Invalid argument");
+		throw std::invalid_argument("Invalid address length");
 	}
+}
+
+NAN_METHOD(Wrapper::AddMembership) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+
+	Socket::MembershipType type = Socket::MULTICAST;
+	unsigned char *address = NULL;
 
 	try {
+		ParseMembershipArguments(info, &type, &address);
 		obj->socket->add_membership(type, address);
 	} catch(const std::exception &e) {
 		return Nan::ThrowError(e.what());
@@ -111,26 +119,12 @@ NAN_METHOD(Wrapper::AddMembership) {
 
 NAN_METHOD(Wrapper::DropMembership) {
 	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
-	Nan::MaybeLocal<v8::Value> type_or_addr_maybe = info[0];
-	if(type_or_addr_maybe.IsEmpty())
-		return Nan::ThrowError("Missing type or address argument");
-	v8::Local<v8::Value> type_or_addr = type_or_addr_maybe.ToLocalChecked();
 
-	unsigned char *address = NULL;
 	Socket::MembershipType type = Socket::MULTICAST;
-
-	if(node::Buffer::HasInstance(type_or_addr)) {
-		if(node::Buffer::Length(type_or_addr) < Socket::ADDRESS_LENGHT) {
-			return Nan::ThrowTypeError("Invalid address length");
-		}
-		address = reinterpret_cast<unsigned char *>(node::Buffer::Data(type_or_addr));
-	} else if(type_or_addr->IsNumber()) {
-		type = static_cast<Socket::MembershipType>(Nan::To<int>(type_or_addr).FromJust());
-	} else {
-		return Nan::ThrowTypeError("Invalid argument");
-	}
+	unsigned char *address = NULL;
 
 	try {
+		ParseMembershipArguments(info, &type, &address);
 		obj->socket->drop_membership(type, address);
 	} catch(const std::exception &e) {
 		return Nan::ThrowError(e.what());

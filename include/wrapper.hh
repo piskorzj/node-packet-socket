@@ -12,6 +12,11 @@ class Wrapper : public Nan::ObjectWrap {
 
 	explicit Wrapper(v8::Local<v8::String> device);
 	~Wrapper(void);
+
+	static void ParseMembershipArguments(
+			Nan::NAN_METHOD_ARGS_TYPE info,
+			Socket::MembershipType *type,
+			unsigned char **address);
 public:
 	static NAN_MODULE_INIT(Init);
 
