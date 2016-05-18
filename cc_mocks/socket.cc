@@ -20,7 +20,7 @@ int Socket::send_message(const unsigned char *destination_address,
 	mock().actualCall("send_message")
 			.withMemoryBufferParameter("destination_address", destination_address, ETHER_ADDR_LEN)
 			.withMemoryBufferParameter("message", (const unsigned char*)message, message_length)
-			.returnIntValue();
+			.withIntParameter("message_length", message_length);
 }
 
 int Socket::receive_message(unsigned char *source_address,
