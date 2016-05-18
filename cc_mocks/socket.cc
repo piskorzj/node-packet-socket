@@ -17,7 +17,7 @@ int Socket::get_descriptor(void) {
 
 int Socket::send_message(const unsigned char *destination_address,
 		const char *message, int message_length) {
-	return mock().actualCall("send_message").onObject(this)
+	mock().actualCall("send_message")
 			.withMemoryBufferParameter("destination_address", destination_address, ETHER_ADDR_LEN)
 			.withMemoryBufferParameter("message", (const unsigned char*)message, message_length)
 			.returnIntValue();
