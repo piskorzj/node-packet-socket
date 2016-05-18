@@ -21,6 +21,11 @@ int Socket::send_message(const unsigned char *destination_address,
 			.withMemoryBufferParameter("destination_address", destination_address, ETHER_ADDR_LEN)
 			.withMemoryBufferParameter("message", (const unsigned char*)message, message_length)
 			.withIntParameter("message_length", message_length);
+	int return_value = mock().returnIntValueOrDefault(6);
+	if(return_value == -1) {
+		throw std::runtime_error("forced send_message failure");
+	}
+	return return_value;
 }
 
 int Socket::receive_message(unsigned char *source_address,
