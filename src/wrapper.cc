@@ -17,6 +17,7 @@ NAN_MODULE_INIT(Wrapper::Init) {
 
 	Nan::SetPrototypeMethod(tpl, "AddMembership", AddMembership);
 	Nan::SetPrototypeMethod(tpl, "DropMembership", DropMembership);
+	Nan::SetPrototypeMethod(tpl, "Send", Send);
 
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
@@ -129,6 +130,41 @@ NAN_METHOD(Wrapper::DropMembership) {
 	} catch(const std::exception &e) {
 		return Nan::ThrowError(e.what());
 	}
+}
+
+NAN_METHOD(Wrapper::Send) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+
+	if(info.Length() != 3)
+		return Nan::ThrowError("Three arguments required");
+
+	v8::Local<v8::Value> message_to_send = info[0];
+	if(!node::Buffer::HasInstance(message_to_send))
+		return Nan::ThrowTypeError("Message argument has to be buffer");
+
+	v8::Local<v8::Value> destination_address = info[1];
+	if(!node::Buffer::HasInstance(destination_address))
+		return Nan::ThrowTypeError("Address argument has to be buffer");
+	if(node::Buffer::Length(destination_address) != Socket::ADDRESS_LENGHT)
+		return Nan::ThrowTypeError("Address argument invalid length");
+
+	if(!info[2]->IsFunction())
+		return Nan::ThrowTypeError("Callback argument has to be function");
+	v8::Local<v8::Function> callback = info[2].As<v8::Function>();
+
+	int send_bytes = -1;
+	try {
+		send_bytes = obj->socket->send_message(
+				reinterpret_cast<unsigned char *>(node::Buffer::Data(destination_address)),
+				node::Buffer::Data(message_to_send),
+				node::Buffer::Length(message_to_send));
+	} catch(const std::exception &e) {
+		return Nan::ThrowError(e.what());
+	}
+
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::New(send_bytes) };
+	Nan::MakeCallback(Nan::GetCurrentContext()->Global(), callback, argc, argv);
 }
 
 NODE_MODULE(packet_socket_addon, Wrapper::Init);
