@@ -432,6 +432,143 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailWithTypeOutOfRange) {
 	}
 }
 
+TEST(WrapperUsageGroup, SendShouldFailWithNoArguments) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 0;
+	v8::Local<v8::Value> argv[argc] = {};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, SendShouldFailWithNotBufferMessageArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = { Nan::EmptyString(), Nan::EmptyString(), Nan::EmptyString()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, SendShouldFailWithNotBufferAddressArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = { Nan::NewBuffer(5).ToLocalChecked(), Nan::EmptyString(), Nan::EmptyString()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, SendShouldFailWithAddressArgumentInvalidSize) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = {
+			Nan::NewBuffer(5).ToLocalChecked(),
+			Nan::NewBuffer(5).ToLocalChecked(),
+			Nan::EmptyString()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, SendShouldFailWithNotFunctionCallbackArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = {
+			Nan::NewBuffer(5).ToLocalChecked(),
+			Nan::NewBuffer(Socket::ADDRESS_LENGHT).ToLocalChecked(),
+			Nan::EmptyString()};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, SendShouldFailWhenSocketSendMessageFail) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];
+	memcpy(address_for_node_buffer, address, Socket::ADDRESS_LENGHT);
+	const char *message = "hello world";
+	char *message_for_node_buffer = new char[strlen(message) + 1];
+	strcpy(message_for_node_buffer, message);
+
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = {
+			Nan::NewBuffer(message_for_node_buffer, strlen(message)).ToLocalChecked(),
+			Nan::NewBuffer(address_for_node_buffer, Socket::ADDRESS_LENGHT).ToLocalChecked(),
+			Nan::New<v8::Function>(Noop)};
+
+	mock().expectOneCall("send_message")
+			.withMemoryBufferParameter("destination_address", address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("message", (const unsigned char*)message, strlen(message))
+			.withIntParameter("message_length", strlen(message))
+			.andReturnValue(-1);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Send didn't threw");
+	}
+}
+
+NAN_METHOD(CallbackForSend) {
+	if(info.Length() != 1)
+		FAIL("Invalid arguments in callback");
+
+	if(!info[0]->IsNumber())
+		FAIL("Argument is not a number");
+
+	int return_code = Nan::To<int>(info[0]).FromJust();
+
+	mock().actualCall("CallbackFromSend").withIntParameter("rc", return_code);
+}
+
+TEST(WrapperUsageGroup, SendShouldCallCallbackWhenSendMessageSuccedd) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];
+	memcpy(address_for_node_buffer, address, Socket::ADDRESS_LENGHT);
+	const char *message = "hello world";
+	int message_len = strlen(message);
+	char *message_for_node_buffer = new char[message_len + 1];
+	strcpy(message_for_node_buffer, message);
+
+	const int argc = 3;
+	v8::Local<v8::Value> argv[argc] = {
+			Nan::NewBuffer(message_for_node_buffer, message_len).ToLocalChecked(),
+			Nan::NewBuffer(address_for_node_buffer, Socket::ADDRESS_LENGHT).ToLocalChecked(),
+			Nan::New<v8::Function>(CallbackForSend)};
+
+	mock().expectOneCall("send_message")
+			.withMemoryBufferParameter("destination_address", address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("message", (const unsigned char*)message, message_len)
+			.withIntParameter("message_length", message_len)
+			.andReturnValue(message_len);
+
+	mock().expectOneCall("CallbackFromSend").withIntParameter("rc", message_len);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Send", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("Send did threw");
+	}
+}
+
 NAN_METHOD(Run) {
 	int argc = info.Length();
 	char ** argv = new char*[argc];
