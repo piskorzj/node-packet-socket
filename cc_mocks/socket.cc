@@ -30,11 +30,15 @@ int Socket::send_message(const unsigned char *destination_address,
 
 int Socket::receive_message(unsigned char *source_address,
 			char *buffer, int buffer_size) {
-	return mock().actualCall("receive_message").onObject(this)
-			.withMemoryBufferParameter("source_address", source_address, ETHER_ADDR_LEN)
+	mock().actualCall("receive_message")
+			.withOutputParameter("source_address", source_address)
 			.withOutputParameter("buffer", buffer)
-			.withIntParameter("buffer_size", buffer_size)
-			.returnIntValue();
+			.withIntParameter("buffer_size", buffer_size);
+	int return_value = mock().returnIntValueOrDefault(6);
+	if(return_value == -1) {
+		throw std::runtime_error("forced receive_message failure");
+	}
+	return return_value;
 }
 
 void Socket::add_membership(Socket::MembershipType type,
