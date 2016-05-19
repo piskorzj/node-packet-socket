@@ -18,6 +18,7 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	Nan::SetPrototypeMethod(tpl, "AddMembership", AddMembership);
 	Nan::SetPrototypeMethod(tpl, "DropMembership", DropMembership);
 	Nan::SetPrototypeMethod(tpl, "Send", Send);
+	Nan::SetPrototypeMethod(tpl, "Receive", Receive);
 
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
@@ -130,6 +131,57 @@ NAN_METHOD(Wrapper::DropMembership) {
 	} catch(const std::exception &e) {
 		return Nan::ThrowError(e.what());
 	}
+}
+
+NAN_METHOD(Wrapper::Receive) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+
+	if(info.Length() != 1)
+		return Nan::ThrowError("One argument required");
+
+	if(!info[0]->IsFunction())
+		return Nan::ThrowTypeError("Callback argument has to be function");
+	v8::Local<v8::Function> callback = info[0].As<v8::Function>();
+
+	int received_bytes = -1;
+	unsigned char *source_address = reinterpret_cast<unsigned char *>(malloc(Socket::ADDRESS_LENGHT));
+	if(!source_address)
+		return Nan::ThrowError("Memory allocation for source address failed");
+
+	char *message_buffer = reinterpret_cast<char *>(malloc(Wrapper::MAX_RECEIVE_BUFFER_SIZE));
+	if(!message_buffer) {
+		free(source_address);
+		return Nan::ThrowError("Memory allocation for buffer failed");
+	}
+
+	try {
+		received_bytes = obj->socket->receive_message(
+				source_address,
+				message_buffer,
+				Wrapper::MAX_RECEIVE_BUFFER_SIZE);
+	} catch(const std::exception &e) {
+		free(source_address);
+		free(message_buffer);
+		return Nan::ThrowError(e.what());
+	}
+
+	char *tmp_buff = reinterpret_cast<char *>(realloc(message_buffer, received_bytes));
+	if(tmp_buff)
+		message_buffer = tmp_buff;
+
+	Nan::MaybeLocal<v8::Object> source_address_node_buffer = Nan::NewBuffer((char *)source_address, Socket::ADDRESS_LENGHT);
+	Nan::MaybeLocal<v8::Object> message_node_buffer = Nan::NewBuffer(message_buffer, received_bytes);
+	if(source_address_node_buffer.IsEmpty() || message_node_buffer.IsEmpty()) {
+		return Nan::ThrowError("Failed to create buffer object");
+	}
+
+	const int argc = 2;
+	v8::Local<v8::Value> argv[argc] = {
+		source_address_node_buffer.ToLocalChecked(),
+		message_node_buffer.ToLocalChecked()
+	};
+	Nan::MakeCallback(Nan::GetCurrentContext()->Global(), callback, argc, argv);
+
 }
 
 NAN_METHOD(Wrapper::Send) {

@@ -432,6 +432,93 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailWithTypeOutOfRange) {
 	}
 }
 
+TEST(WrapperUsageGroup, ReceiveShouldFailWithNoArguments) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 0;
+	v8::Local<v8::Value> argv[argc] = {};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, ReceiveShouldFailWithNotCallbackArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::EmptyString() };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+TEST(WrapperUsageGroup, ReceiveShouldFailWhenSocketReceiveMessageFail) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+
+	mock().expectOneCall("receive_message").ignoreOtherParameters()
+			.andReturnValue(-1);
+
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::New<v8::Function>(Noop) };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+NAN_METHOD(CallbackForReceive) {
+	if(info.Length() != 2)
+		FAIL("Invalid arguments in callback");
+
+	if(!node::Buffer::HasInstance(info[0]))
+		FAIL("Argument source_address is not a buffer");
+
+	if(!node::Buffer::HasInstance(info[1]))
+			FAIL("Argument message is not a buffer");
+
+	mock().actualCall("CallbackFromReceive")
+			.withMemoryBufferParameter("source_address",
+					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[0])),
+					node::Buffer::Length(info[0]))
+			.withMemoryBufferParameter("message",
+					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[1])),
+					node::Buffer::Length(info[1]));
+}
+
+TEST(WrapperUsageGroup, ReceiveShouldCallCallbackWhenSocketReceiveMessageSuccedd) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+
+	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	const char *message = "hello world";
+	const int message_len = strlen(message);
+
+	mock().expectOneCall("receive_message")
+			.withOutputParameterReturning("source_address", address, Socket::ADDRESS_LENGHT)
+			.withOutputParameterReturning("buffer", message, message_len)
+			.ignoreOtherParameters()
+			.andReturnValue(message_len);
+
+	mock().expectOneCall("CallbackFromReceive")
+			.withMemoryBufferParameter("source_address", address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("message",
+					reinterpret_cast<const unsigned char*>(message), message_len);
+
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::New<v8::Function>(CallbackForReceive) };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("Receive did threw");
+	}
+}
+
 TEST(WrapperUsageGroup, SendShouldFailWithNoArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 0;

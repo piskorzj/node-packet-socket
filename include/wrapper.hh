@@ -28,6 +28,7 @@ public:
 	static NAN_METHOD(DropMembership);
 
 	static NAN_METHOD(Send);
+	static NAN_METHOD(Receive);
 };
 
 #endif
