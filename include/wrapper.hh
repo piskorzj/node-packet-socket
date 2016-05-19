@@ -6,6 +6,8 @@
 #include "socket.hh"
 
 class Wrapper : public Nan::ObjectWrap {
+	static const int MAX_RECEIVE_BUFFER_SIZE = 2048;
+
 	static Nan::Persistent<v8::Function> constructor;
 
 	Socket *socket;
