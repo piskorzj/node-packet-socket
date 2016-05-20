@@ -49,6 +49,6 @@ add_custom_target(run_wrapper_test
 add_custom_target(run_all_node_tests
   DEPENDS run_wrapper_test)
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -VV
-  DEPENDS ${TEST_TARGETS} run_all_node_tests)
+add_test(test_of_node_cpp_parts make run_all_node_tests)
 
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -VV)
