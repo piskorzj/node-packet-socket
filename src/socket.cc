@@ -83,6 +83,7 @@ int Socket::send_message(const unsigned char *destination_address,
 }
 
 int Socket::receive_message(unsigned char *source_address,
+			unsigned char *destination_address,
 			char *buffer, int buffer_size) {
 	struct sockaddr_ll addr;
 	memset(&addr, 0, sizeof(addr));
@@ -108,6 +109,7 @@ int Socket::receive_message(unsigned char *source_address,
 		throw std::runtime_error(strerror(errno));
 
 	memcpy(source_address, addr.sll_addr, ETHER_ADDR_LEN);
+	memcpy(destination_address, header.ether_dhost, ETHER_ADDR_LEN);
 
 	return received_bytes - sizeof(header);
 }

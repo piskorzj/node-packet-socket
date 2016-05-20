@@ -240,24 +240,27 @@ TEST(SocketUsage, RecvShouldThrowOnRecvmsgFail) {
 	const int receive_buffer_size = 2000;
 	char receive_buffer[receive_buffer_size];
 	unsigned char from_addres[6];
+	unsigned char to_addres[6];
 	CHECK_THROWS(std::runtime_error,
-			socket->receive_message(from_addres, receive_buffer, receive_buffer_size));
+			socket->receive_message(from_addres, to_addres, receive_buffer, receive_buffer_size));
 }
 TEST(SocketUsage, RecvShouldCallRecvmsg) {
 	struct sockaddr_ll mocked_received_from_address;
 	unsigned char source_address[] = {0xde, 0xad, 0, 0, 0xff, 0xff};
 	memcpy(mocked_received_from_address.sll_addr, source_address, ETHER_ADDR_LEN);
+	unsigned char destination_address[] = {0xde, 0xad, 0, 0, 0xee, 0xff};
 
 	const char *mocked_message = "hello";
 
 	struct ether_header ethernet_header;
 	ethernet_header.ether_type = htons(strlen(mocked_message));
 	memcpy(ethernet_header.ether_shost, source_address, ETHER_ADDR_LEN);
-	memcpy(ethernet_header.ether_dhost, this->address, ETHER_ADDR_LEN);
+	memcpy(ethernet_header.ether_dhost, destination_address, ETHER_ADDR_LEN);
 
 	const int receive_buffer_size = 2000;
 	char receive_buffer[receive_buffer_size];
 	unsigned char from_addres[6];
+	unsigned char to_addres[6];
 
 	mock().expectOneCall("recvmsg")
 			.withIntParameter("fd", this->socket_descriptor)
@@ -273,9 +276,10 @@ TEST(SocketUsage, RecvShouldCallRecvmsg) {
 	int received_bytes;
 
 
-	received_bytes = socket->receive_message(from_addres, receive_buffer, receive_buffer_size);
+	received_bytes = socket->receive_message(from_addres, to_addres, receive_buffer, receive_buffer_size);
 
 	MEMCMP_EQUAL(source_address, from_addres, ETHER_ADDR_LEN);
+	MEMCMP_EQUAL(destination_address, to_addres, ETHER_ADDR_LEN);
 	MEMCMP_EQUAL(mocked_message, receive_buffer, received_bytes);
 }
 

@@ -29,9 +29,11 @@ int Socket::send_message(const unsigned char *destination_address,
 }
 
 int Socket::receive_message(unsigned char *source_address,
+			unsigned char *destination_address,
 			char *buffer, int buffer_size) {
 	mock().actualCall("receive_message")
 			.withOutputParameter("source_address", source_address)
+			.withOutputParameter("destination_address", destination_address)
 			.withOutputParameter("buffer", buffer)
 			.withIntParameter("buffer_size", buffer_size);
 	int return_value = mock().returnIntValueOrDefault(6);
