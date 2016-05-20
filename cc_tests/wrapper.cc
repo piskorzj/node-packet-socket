@@ -473,39 +473,48 @@ TEST(WrapperUsageGroup, ReceiveShouldFailWhenSocketReceiveMessageFail) {
 }
 
 NAN_METHOD(CallbackForReceive) {
-	if(info.Length() != 2)
+	if(info.Length() != 3)
 		FAIL("Invalid arguments in callback");
 
 	if(!node::Buffer::HasInstance(info[0]))
 		FAIL("Argument source_address is not a buffer");
 
 	if(!node::Buffer::HasInstance(info[1]))
+			FAIL("Argument destination_address is not a buffer");
+
+	if(!node::Buffer::HasInstance(info[2]))
 			FAIL("Argument message is not a buffer");
 
 	mock().actualCall("CallbackFromReceive")
 			.withMemoryBufferParameter("source_address",
 					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[0])),
 					node::Buffer::Length(info[0]))
+			.withMemoryBufferParameter("destination_address",
+								reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[1])),
+								node::Buffer::Length(info[1]))
 			.withMemoryBufferParameter("message",
-					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[1])),
-					node::Buffer::Length(info[1]));
+					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[2])),
+					node::Buffer::Length(info[2]));
 }
 
 TEST(WrapperUsageGroup, ReceiveShouldCallCallbackWhenSocketReceiveMessageSuccedd) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 
-	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	const unsigned char source_address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	const unsigned char destination_address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x31};
 	const char *message = "hello world";
 	const int message_len = strlen(message);
 
 	mock().expectOneCall("receive_message")
-			.withOutputParameterReturning("source_address", address, Socket::ADDRESS_LENGHT)
+			.withOutputParameterReturning("source_address", source_address, Socket::ADDRESS_LENGHT)
+			.withOutputParameterReturning("destination_address", destination_address, Socket::ADDRESS_LENGHT)
 			.withOutputParameterReturning("buffer", message, message_len)
 			.ignoreOtherParameters()
 			.andReturnValue(message_len);
 
 	mock().expectOneCall("CallbackFromReceive")
-			.withMemoryBufferParameter("source_address", address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("source_address", source_address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("destination_address", destination_address, Socket::ADDRESS_LENGHT)
 			.withMemoryBufferParameter("message",
 					reinterpret_cast<const unsigned char*>(message), message_len);
 
