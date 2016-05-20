@@ -1,7 +1,23 @@
 #include "wrapper.hh"
 
-Wrapper::Wrapper(v8::Local<v8::String> device) {
-	Nan::Utf8String device_string(device);
+Wrapper::Wrapper(v8::Local<v8::Object> options) {
+
+	v8::Local<v8::Value> options_device_value = Nan::Get(options, Nan::New("device").ToLocalChecked()).ToLocalChecked();
+	if(!options_device_value->IsString()) {
+		throw std::invalid_argument("Options should have string device property");
+	}
+
+	v8::Local<v8::Value> options_onRecv_value = Nan::Get(options, Nan::New("onRecv").ToLocalChecked()).ToLocalChecked();
+	if(!options_onRecv_value->IsFunction()) {
+		throw std::invalid_argument("Options should have callback onRecv property");
+	}
+
+	v8::Local<v8::Value> options_onSend_value = Nan::Get(options, Nan::New("onSend").ToLocalChecked()).ToLocalChecked();
+	if(!options_onSend_value->IsFunction()) {
+		throw std::invalid_argument("Options should have callback onSend property");
+	}
+
+	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
 }
 Wrapper::~Wrapper() {
@@ -45,23 +61,8 @@ NAN_METHOD(Wrapper::New) {
 			return Nan::ThrowTypeError("Options should have onSend property");
 		}
 
-		v8::Local<v8::Value> options_device_value = Nan::Get(options_object, Nan::New("device").ToLocalChecked()).ToLocalChecked();
-		if(!options_device_value->IsString()) {
-			return Nan::ThrowTypeError("Options should have string device property");
-		}
-
-		v8::Local<v8::Value> options_onRecv_value = Nan::Get(options_object, Nan::New("onRecv").ToLocalChecked()).ToLocalChecked();
-		if(!options_onRecv_value->IsFunction()) {
-			return Nan::ThrowTypeError("Options should have callback onRecv property");
-		}
-
-		v8::Local<v8::Value> options_onSend_value = Nan::Get(options_object, Nan::New("onSend").ToLocalChecked()).ToLocalChecked();
-		if(!options_onSend_value->IsFunction()) {
-			return Nan::ThrowTypeError("Options should have callback onSend property");
-		}
-
 		try {
-			Wrapper *object = new Wrapper(Nan::To<v8::String>(options_device_value).ToLocalChecked());
+			Wrapper *object = new Wrapper(options_object);
 			object->Wrap(info.This());
 		} catch(const std::exception &e) {
 			return Nan::ThrowError(e.what());

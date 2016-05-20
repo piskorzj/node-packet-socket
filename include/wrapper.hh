@@ -12,7 +12,7 @@ class Wrapper : public Nan::ObjectWrap {
 
 	Socket *socket;
 
-	explicit Wrapper(v8::Local<v8::String> device);
+	explicit Wrapper(v8::Local<v8::Object> options);
 	~Wrapper(void);
 
 	static void ParseMembershipArguments(
