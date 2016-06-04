@@ -1,4 +1,5 @@
 #include "wrapper.hh"
+#include <stdexcept>
 
 Wrapper::Wrapper(v8::Local<v8::Object> options) {
 
