@@ -18,10 +18,15 @@ Wrapper::Wrapper(v8::Local<v8::Object> options) {
 		throw std::invalid_argument("Options should have callback onSend property");
 	}
 
+	onRecvCallback.Reset(options_onRecv_value.As<v8::Function>());
+	onSendCallback.Reset(options_onSend_value.As<v8::Function>());
+
 	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
 }
 Wrapper::~Wrapper() {
+	onRecvCallback.Reset();
+	onSendCallback.Reset();
 	delete socket;
 }
 
