@@ -10,6 +10,9 @@ class Wrapper : public Nan::ObjectWrap {
 
 	static Nan::Persistent<v8::Function> constructor;
 
+	Nan::Persistent<v8::Function> onSendCallback;
+	Nan::Persistent<v8::Function> onRecvCallback;
+
 	Socket *socket;
 
 	explicit Wrapper(v8::Local<v8::Object> options);
