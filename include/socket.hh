@@ -20,6 +20,7 @@ public:
 	int send_message(const unsigned char *destination_address,
 			const char *message, int message_length);
 	int receive_message(unsigned char *source_address,
+			unsigned char *destination_address,
 			char *buffer, int buffer_size);
 
 	enum MembershipType {

@@ -4,14 +4,14 @@
 #include "CppUTest/CommandLineTestRunner.h"
 #include "CppUTestExt/MockSupport.h"
 
-TEST_GROUP(WrapperInitGroup) {
+TEST_GROUP(WrapperInit) {
 	void teardown() {
 		mock().checkExpectations();
 		mock().clear();
 	}
 };
 
-TEST(WrapperInitGroup, ConstructShouldFailOnEmptyArguments) {
+TEST(WrapperInit, ConstructShouldFailOnEmptyArguments) {
 	v8::Local<v8::Value> argv[] = {};
 	Wrapper::Init(Nan::GetCurrentContext()->Global());
 
@@ -24,7 +24,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnEmptyArguments) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnMissingDevicePropery) {
+TEST(WrapperInit, ConstructShouldFailOnMissingDevicePropery) {
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = { Nan::EmptyString() };
 	Wrapper::Init(Nan::GetCurrentContext()->Global());
@@ -38,7 +38,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnMissingDevicePropery) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnMissingOnRecvPropery) {
+TEST(WrapperInit, ConstructShouldFailOnMissingOnRecvPropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
@@ -54,7 +54,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnMissingOnRecvPropery) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnMissingOnSendPropery) {
+TEST(WrapperInit, ConstructShouldFailOnMissingOnSendPropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
@@ -71,7 +71,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnMissingOnSendPropery) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnInvalidDevicePropery) {
+TEST(WrapperInit, ConstructShouldFailOnInvalidDevicePropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::Null());
@@ -89,7 +89,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnInvalidDevicePropery) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnInvalidOnRecvPropery) {
+TEST(WrapperInit, ConstructShouldFailOnInvalidOnRecvPropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
@@ -110,7 +110,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnInvalidOnRecvPropery) {
 static NAN_METHOD(Noop) {
 
 }
-TEST(WrapperInitGroup, ConstructShouldFailOnInvalidOnSendPropery) {
+TEST(WrapperInit, ConstructShouldFailOnInvalidOnSendPropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
@@ -128,7 +128,7 @@ TEST(WrapperInitGroup, ConstructShouldFailOnInvalidOnSendPropery) {
 	}
 }
 
-TEST(WrapperInitGroup, ConstructShouldFailOnSocketCreation) {
+TEST(WrapperInit, ConstructShouldFailOnSocketCreation) {
 	const char * expected_device = "rfm0";
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
@@ -151,7 +151,15 @@ TEST(WrapperInitGroup, ConstructShouldFailOnSocketCreation) {
 	}
 }
 
-TEST_GROUP(WrapperUsageGroup) {
+NAN_METHOD(OnRecvCallback) {
+	mock().actualCall("OnRecvCallback");
+}
+
+NAN_METHOD(OnSendCallback) {
+	mock().actualCall("OnSendCallback");
+}
+
+TEST_GROUP(WrapperUsage) {
 	Nan::Persistent<v8::Object> wrapped_obj;
 	Wrapper *unwrapped;
 
@@ -160,8 +168,8 @@ TEST_GROUP(WrapperUsageGroup) {
 		const int argc = 1;
 		v8::Local<v8::Object> options = Nan::New<v8::Object>();
 		Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New(expected_device).ToLocalChecked());
-		Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(Noop));
-		Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(Noop));
+		Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(OnRecvCallback));
+		Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(OnSendCallback));
 		v8::Local<v8::Value> argv[argc] = { options };
 		Wrapper::Init(Nan::GetCurrentContext()->Global());
 
@@ -182,7 +190,7 @@ TEST_GROUP(WrapperUsageGroup) {
 	}
 };
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailOnEmptyArguments) {
+TEST(WrapperUsage, AddMembershipShouldFailOnEmptyArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	v8::Local<v8::Value> argv[] = {};
 
@@ -193,7 +201,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailOnEmptyArguments) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailOnNoAddressOrNonTypeArguments) {
+TEST(WrapperUsage, AddMembershipShouldFailOnNoAddressOrNonTypeArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::EmptyString()};
@@ -205,7 +213,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailOnNoAddressOrNonTypeArguments) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailOnToShortAddressArgument) {
+TEST(WrapperUsage, AddMembershipShouldFailOnToShortAddressArgument) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::NewBuffer(4).ToLocalChecked()};
@@ -217,7 +225,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailOnToShortAddressArgument) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailOnSocketCallFailWithAddress) {
+TEST(WrapperUsage, AddMembershipShouldFailOnSocketCallFailWithAddress) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
@@ -237,7 +245,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailOnSocketCallFailWithAddress) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldSucceddWithAddress) {
+TEST(WrapperUsage, AddMembershipShouldSucceddWithAddress) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
@@ -257,7 +265,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldSucceddWithAddress) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailOnSocketCallFailWithType) {
+TEST(WrapperUsage, AddMembershipShouldFailOnSocketCallFailWithType) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
@@ -274,7 +282,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailOnSocketCallFailWithType) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldSucceddWithType) {
+TEST(WrapperUsage, AddMembershipShouldSucceddWithType) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
@@ -291,7 +299,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldSucceddWithType) {
 	}
 }
 
-TEST(WrapperUsageGroup, AddMembershipShouldFailWithTypeOutOfRange) {
+TEST(WrapperUsage, AddMembershipShouldFailWithTypeOutOfRange) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(123)};
@@ -307,7 +315,7 @@ TEST(WrapperUsageGroup, AddMembershipShouldFailWithTypeOutOfRange) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailOnEmptyArguments) {
+TEST(WrapperUsage, DropMembershipShouldFailOnEmptyArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	v8::Local<v8::Value> argv[] = {};
 
@@ -318,7 +326,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailOnEmptyArguments) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailOnNoAddressOrNonTypeArguments) {
+TEST(WrapperUsage, DropMembershipShouldFailOnNoAddressOrNonTypeArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::EmptyString()};
@@ -330,7 +338,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailOnNoAddressOrNonTypeArguments) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailOnToShortAddressArgument) {
+TEST(WrapperUsage, DropMembershipShouldFailOnToShortAddressArgument) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::NewBuffer(4).ToLocalChecked()};
@@ -342,7 +350,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailOnToShortAddressArgument) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithAddress) {
+TEST(WrapperUsage, DropMembershipShouldFailOnSocketCallFailWithAddress) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
@@ -362,7 +370,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithAddress) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithAddress) {
+TEST(WrapperUsage, DropMembershipShouldSucceddWithAddress) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
@@ -382,7 +390,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithAddress) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithType) {
+TEST(WrapperUsage, DropMembershipShouldFailOnSocketCallFailWithType) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
@@ -399,7 +407,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailOnSocketCallFailWithType) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithType) {
+TEST(WrapperUsage, DropMembershipShouldSucceddWithType) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(Socket::PROMISCIOUS)};
@@ -416,7 +424,7 @@ TEST(WrapperUsageGroup, DropMembershipShouldSucceddWithType) {
 	}
 }
 
-TEST(WrapperUsageGroup, DropMembershipShouldFailWithTypeOutOfRange) {
+TEST(WrapperUsage, DropMembershipShouldFailWithTypeOutOfRange) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(123)};
@@ -432,7 +440,103 @@ TEST(WrapperUsageGroup, DropMembershipShouldFailWithTypeOutOfRange) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWithNoArguments) {
+TEST(WrapperUsage, ReceiveShouldFailWithNoArguments) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 0;
+	v8::Local<v8::Value> argv[argc] = {};
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+TEST(WrapperUsage, ReceiveShouldFailWithNotCallbackArgument) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::EmptyString() };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+TEST(WrapperUsage, ReceiveShouldFailWhenSocketReceiveMessageFail) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+
+	mock().expectOneCall("receive_message").ignoreOtherParameters()
+			.andReturnValue(-1);
+
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::New<v8::Function>(Noop) };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Receive didn't threw");
+	}
+}
+
+NAN_METHOD(CallbackForReceive) {
+	if(info.Length() != 3)
+		FAIL("Invalid arguments in callback");
+
+	if(!node::Buffer::HasInstance(info[0]))
+		FAIL("Argument source_address is not a buffer");
+
+	if(!node::Buffer::HasInstance(info[1]))
+			FAIL("Argument destination_address is not a buffer");
+
+	if(!node::Buffer::HasInstance(info[2]))
+			FAIL("Argument message is not a buffer");
+
+	mock().actualCall("CallbackFromReceive")
+			.withMemoryBufferParameter("source_address",
+					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[0])),
+					node::Buffer::Length(info[0]))
+			.withMemoryBufferParameter("destination_address",
+								reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[1])),
+								node::Buffer::Length(info[1]))
+			.withMemoryBufferParameter("message",
+					reinterpret_cast<const unsigned char*>(node::Buffer::Data(info[2])),
+					node::Buffer::Length(info[2]));
+}
+
+TEST(WrapperUsage, ReceiveShouldCallCallbackWhenSocketReceiveMessageSuccedd) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+
+	const unsigned char source_address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
+	const unsigned char destination_address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x31};
+	const char *message = "hello world";
+	const int message_len = strlen(message);
+
+	mock().expectOneCall("receive_message")
+			.withOutputParameterReturning("source_address", source_address, Socket::ADDRESS_LENGHT)
+			.withOutputParameterReturning("destination_address", destination_address, Socket::ADDRESS_LENGHT)
+			.withOutputParameterReturning("buffer", message, message_len)
+			.ignoreOtherParameters()
+			.andReturnValue(message_len);
+
+	mock().expectOneCall("CallbackFromReceive")
+			.withMemoryBufferParameter("source_address", source_address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("destination_address", destination_address, Socket::ADDRESS_LENGHT)
+			.withMemoryBufferParameter("message",
+					reinterpret_cast<const unsigned char*>(message), message_len);
+
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = { Nan::New<v8::Function>(CallbackForReceive) };
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "Receive", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("Receive did threw");
+	}
+}
+
+TEST(WrapperUsage, SendShouldFailWithNoArguments) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 0;
 	v8::Local<v8::Value> argv[argc] = {};
@@ -444,7 +548,7 @@ TEST(WrapperUsageGroup, SendShouldFailWithNoArguments) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWithNotBufferMessageArgument) {
+TEST(WrapperUsage, SendShouldFailWithNotBufferMessageArgument) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 3;
 	v8::Local<v8::Value> argv[argc] = { Nan::EmptyString(), Nan::EmptyString(), Nan::EmptyString()};
@@ -456,7 +560,7 @@ TEST(WrapperUsageGroup, SendShouldFailWithNotBufferMessageArgument) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWithNotBufferAddressArgument) {
+TEST(WrapperUsage, SendShouldFailWithNotBufferAddressArgument) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 3;
 	v8::Local<v8::Value> argv[argc] = { Nan::NewBuffer(5).ToLocalChecked(), Nan::EmptyString(), Nan::EmptyString()};
@@ -468,7 +572,7 @@ TEST(WrapperUsageGroup, SendShouldFailWithNotBufferAddressArgument) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWithAddressArgumentInvalidSize) {
+TEST(WrapperUsage, SendShouldFailWithAddressArgumentInvalidSize) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 3;
 	v8::Local<v8::Value> argv[argc] = {
@@ -483,7 +587,7 @@ TEST(WrapperUsageGroup, SendShouldFailWithAddressArgumentInvalidSize) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWithNotFunctionCallbackArgument) {
+TEST(WrapperUsage, SendShouldFailWithNotFunctionCallbackArgument) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const int argc = 3;
 	v8::Local<v8::Value> argv[argc] = {
@@ -498,7 +602,7 @@ TEST(WrapperUsageGroup, SendShouldFailWithNotFunctionCallbackArgument) {
 	}
 }
 
-TEST(WrapperUsageGroup, SendShouldFailWhenSocketSendMessageFail) {
+TEST(WrapperUsage, SendShouldFailWhenSocketSendMessageFail) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
 	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];
@@ -538,7 +642,7 @@ NAN_METHOD(CallbackForSend) {
 	mock().actualCall("CallbackFromSend").withIntParameter("rc", return_code);
 }
 
-TEST(WrapperUsageGroup, SendShouldCallCallbackWhenSendMessageSuccedd) {
+TEST(WrapperUsage, SendShouldCallCallbackWhenSendMessageSuccedd) {
 	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
 	const unsigned char address[] = {0xde, 0xad, 0x00, 0x00, 0x12, 0x34};
 	char *address_for_node_buffer = new char[Socket::ADDRESS_LENGHT];

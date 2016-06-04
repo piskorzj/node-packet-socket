@@ -6,11 +6,16 @@
 #include "socket.hh"
 
 class Wrapper : public Nan::ObjectWrap {
+	static const int MAX_RECEIVE_BUFFER_SIZE = 2048;
+
 	static Nan::Persistent<v8::Function> constructor;
+
+	Nan::Persistent<v8::Function> onSendCallback;
+	Nan::Persistent<v8::Function> onRecvCallback;
 
 	Socket *socket;
 
-	explicit Wrapper(v8::Local<v8::String> device);
+	explicit Wrapper(v8::Local<v8::Object> options);
 	~Wrapper(void);
 
 	static void ParseMembershipArguments(
@@ -26,6 +31,7 @@ public:
 	static NAN_METHOD(DropMembership);
 
 	static NAN_METHOD(Send);
+	static NAN_METHOD(Receive);
 };
 
 #endif
