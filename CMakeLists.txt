@@ -10,7 +10,7 @@ function(add_module module_name)
   foreach(MODULE ${REDUCED_MODULES})
     list(APPEND MOCKS ${MOCKS_DIR}/${MODULE}.cc)
   endforeach(MODULE)
-  add_executable(test_${module_name} 
+  add_executable(test_${module_name}
     ${SRC_DIR}/${module_name}.cc
     ${TESTS_DIR}/${module_name}.cc
     ${MOCKS})
