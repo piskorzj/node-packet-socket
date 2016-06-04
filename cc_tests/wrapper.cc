@@ -151,6 +151,14 @@ TEST(WrapperInit, ConstructShouldFailOnSocketCreation) {
 	}
 }
 
+NAN_METHOD(OnRecvCallback) {
+	mock().actualCall("OnRecvCallback");
+}
+
+NAN_METHOD(OnSendCallback) {
+	mock().actualCall("OnSendCallback");
+}
+
 TEST_GROUP(WrapperUsage) {
 	Nan::Persistent<v8::Object> wrapped_obj;
 	Wrapper *unwrapped;
@@ -160,8 +168,8 @@ TEST_GROUP(WrapperUsage) {
 		const int argc = 1;
 		v8::Local<v8::Object> options = Nan::New<v8::Object>();
 		Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New(expected_device).ToLocalChecked());
-		Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(Noop));
-		Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(Noop));
+		Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(OnRecvCallback));
+		Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(OnSendCallback));
 		v8::Local<v8::Value> argv[argc] = { options };
 		Wrapper::Init(Nan::GetCurrentContext()->Global());
 
