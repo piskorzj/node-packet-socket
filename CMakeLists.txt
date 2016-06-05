@@ -46,8 +46,14 @@ add_custom_target(run_wrapper_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   VERBATIM)
 
+add_custom_target(run_poller_test
+  COMMAND node -e "process.exitCode = require('./build/Release/test_poller.node').Run('', '-v', '-c')"
+  DEPENDS build_node_gyp
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  VERBATIM)
+
 add_custom_target(run_all_node_tests
-  DEPENDS run_wrapper_test)
+DEPENDS run_wrapper_test run_poller_test)
 
 add_test(test_of_node_cpp_parts make run_all_node_tests)
 

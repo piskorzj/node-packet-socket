@@ -20,7 +20,17 @@
       "libraries": [ "-lCppUTest", "-lCppUTestExt"  ],
       "cflags!": [ "-fno-exceptions" ],
       "cflags_cc!": [ "-fno-exceptions" ]
+    },
+    {
+      "target_name": "test_poller",
+      "sources": [ "src/poller.cc", "cc_tests/poller.cc" ],
+      "include_dirs": [
+          "<!(node -e \"require('nan')\")",
+          "include"
+      ],
+      "libraries": [ "-lCppUTest", "-lCppUTestExt"  ],
+      "cflags!": [ "-fno-exceptions" ],
+      "cflags_cc!": [ "-fno-exceptions" ]
     }
   ]
 }
-
