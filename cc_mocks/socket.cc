@@ -1,5 +1,6 @@
 #include "CppUTestExt/MockSupport.h"
 #include "socket.hh"
+#include <stdexcept>
 
 Socket::Socket(const char * device) {
 	mock().actualCall("socket_constructor")
