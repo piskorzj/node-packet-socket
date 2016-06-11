@@ -38,6 +38,8 @@ public:
 
 	static NAN_METHOD(Send);
 	static NAN_METHOD(Receive);
+
+	static NAN_METHOD(PauseSending);
 };
 
 #endif
