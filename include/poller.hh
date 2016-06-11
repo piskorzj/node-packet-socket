@@ -8,7 +8,8 @@ public:
   enum PollerEvents {
     NONE_EVENT = 0,
     READ_EVENT = UV_READABLE,
-    WRITE_EVENT = UV_WRITABLE
+    WRITE_EVENT = UV_WRITABLE,
+    RW_EVENT = UV_READABLE | UV_WRITABLE
   };
 
   Poller(
