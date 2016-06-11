@@ -40,6 +40,7 @@ public:
 	static NAN_METHOD(Receive);
 
 	static NAN_METHOD(PauseSending);
+	static NAN_METHOD(ResumeSending);
 };
 
 #endif

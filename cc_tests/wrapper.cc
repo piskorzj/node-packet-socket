@@ -688,6 +688,20 @@ TEST(WrapperUsage, PauseSendingShouldCallPollersSetEvent) {
 	}
 }
 
+TEST(WrapperUsage, ResumeSendingShouldCallPollersSetEvent) {
+	v8::Local<v8::Object> wrap = Nan::New(wrapped_obj);
+	const int argc = 0;
+	v8::Local<v8::Value> argv[argc] = {};
+
+	mock().expectOneCall("set_events").withIntParameter("events", Poller::WRITE_EVENT | Poller::READ_EVENT);
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(wrap, "ResumeSending", argc, argv);
+	if(catchBlock.HasCaught()) {
+		FAIL("Send did threw");
+	}
+}
+
 NAN_METHOD(Run) {
 	int argc = info.Length();
 	char ** argv = new char*[argc];

@@ -49,6 +49,7 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	Nan::SetPrototypeMethod(tpl, "Receive", Receive);
 
 	Nan::SetPrototypeMethod(tpl, "PauseSending", PauseSending);
+	Nan::SetPrototypeMethod(tpl, "ResumeSending", ResumeSending);
 
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
@@ -248,6 +249,11 @@ NAN_METHOD(Wrapper::Send) {
 NAN_METHOD(Wrapper::PauseSending) {
 	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
 	obj->poller->set_events(Poller::WRITE_EVENT);
+}
+
+NAN_METHOD(Wrapper::ResumeSending) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+	obj->poller->set_events(Poller::RW_EVENT);
 }
 
 NODE_MODULE(packet_socket_addon, Wrapper::Init);
