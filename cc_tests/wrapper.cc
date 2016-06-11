@@ -176,6 +176,7 @@ TEST_GROUP(WrapperUsage) {
 		mock().expectOneCall("socket_constructor")
 				.withStringParameter("device", expected_device)
 				.andReturnValue(true);
+		mock().expectOneCall("get_descriptor").andReturnValue(5);
 
 		v8::Local<v8::Object> result = Nan::To<v8::Object>(Nan::MakeCallback(
 				Nan::GetCurrentContext()->Global(),
