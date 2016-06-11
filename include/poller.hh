@@ -29,6 +29,7 @@ private:
   void *external_data;
 
   uv_poll_t *uv_poll;
+  PollerEvents current_events;
 
   static void on_close(uv_handle_t *handle);
   static void io_event_wrapper(uv_poll_t* watcher, int status, int revents);
