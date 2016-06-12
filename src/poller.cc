@@ -13,6 +13,7 @@ Poller::Poller(
   uv_poll = new uv_poll_t;
   uv_poll_init_socket(uv_default_loop(), uv_poll, descriptor);
   uv_poll->data = this;
+  current_events = READ_EVENT;
   uv_poll_start(uv_poll, UV_READABLE, Poller::io_event_wrapper);
 }
 
@@ -41,6 +42,8 @@ void Poller::io_event(int status, int revents) {
 }
 
 void Poller::set_events(PollerEvents events) {
+  if(events == current_events) return;
+  current_events = events;
   uv_poll_stop(uv_poll);
   if(events)
     uv_poll_start(uv_poll, events, Poller::io_event_wrapper);

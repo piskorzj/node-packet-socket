@@ -18,15 +18,28 @@ Wrapper::Wrapper(v8::Local<v8::Object> options) {
 		throw std::invalid_argument("Options should have callback onSend property");
 	}
 
+	v8::Local<v8::Value> options_onError_value = Nan::Get(options, Nan::New("onError").ToLocalChecked()).ToLocalChecked();
+	if(!options_onError_value->IsFunction()) {
+		throw std::invalid_argument("Options should have callback onError property");
+	}
+
 	onRecvCallback.Reset(options_onRecv_value.As<v8::Function>());
 	onSendCallback.Reset(options_onSend_value.As<v8::Function>());
+	onSendCallback.Reset(options_onError_value.As<v8::Function>());
 
 	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
+	poller = new Poller(socket->get_descriptor(),
+		Wrapper::ReadReadyCallback,
+		Wrapper::WriteReadyCallback,
+		Wrapper::ErrorCallback,
+		this);
 }
 Wrapper::~Wrapper() {
 	onRecvCallback.Reset();
 	onSendCallback.Reset();
+	onErrorCallback.Reset();
+	delete poller;
 	delete socket;
 }
 
@@ -41,6 +54,9 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	Nan::SetPrototypeMethod(tpl, "DropMembership", DropMembership);
 	Nan::SetPrototypeMethod(tpl, "Send", Send);
 	Nan::SetPrototypeMethod(tpl, "Receive", Receive);
+
+	Nan::SetPrototypeMethod(tpl, "PauseSending", PauseSending);
+	Nan::SetPrototypeMethod(tpl, "ResumeSending", ResumeSending);
 
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
@@ -67,6 +83,10 @@ NAN_METHOD(Wrapper::New) {
 			return Nan::ThrowTypeError("Options should have onSend property");
 		}
 
+		if(!Nan::HasOwnProperty(options_object, Nan::New("onError").ToLocalChecked()).FromMaybe(false)) {
+			return Nan::ThrowTypeError("Options should have onError property");
+		}
+
 		try {
 			Wrapper *object = new Wrapper(options_object);
 			object->Wrap(info.This());
@@ -88,6 +108,25 @@ NAN_METHOD(Wrapper::New) {
 		}
 		info.GetReturnValue().Set(constructed_object.ToLocalChecked());
 	}
+}
+
+void Wrapper::ReadReadyCallback(void *data) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onRecvCallback));
+	callback.Call(0, 0);
+}
+void Wrapper::WriteReadyCallback(void *data) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	callback.Call(0, 0);
+}
+
+void Wrapper::ErrorCallback(void *data, const char *error) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::New(error).ToLocalChecked()};
+	callback.Call(argc, argv);
 }
 
 void Wrapper::ParseMembershipArguments(
@@ -235,6 +274,16 @@ NAN_METHOD(Wrapper::Send) {
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = { Nan::New(send_bytes) };
 	Nan::MakeCallback(Nan::GetCurrentContext()->Global(), callback, argc, argv);
+}
+
+NAN_METHOD(Wrapper::PauseSending) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+	obj->poller->set_events(Poller::WRITE_EVENT);
+}
+
+NAN_METHOD(Wrapper::ResumeSending) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+	obj->poller->set_events(Poller::RW_EVENT);
 }
 
 NODE_MODULE(packet_socket_addon, Wrapper::Init);

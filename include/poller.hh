@@ -8,7 +8,8 @@ public:
   enum PollerEvents {
     NONE_EVENT = 0,
     READ_EVENT = UV_READABLE,
-    WRITE_EVENT = UV_WRITABLE
+    WRITE_EVENT = UV_WRITABLE,
+    RW_EVENT = UV_READABLE | UV_WRITABLE
   };
 
   Poller(
@@ -29,6 +30,7 @@ private:
   void *external_data;
 
   uv_poll_t *uv_poll;
+  PollerEvents current_events;
 
   static void on_close(uv_handle_t *handle);
   static void io_event_wrapper(uv_poll_t* watcher, int status, int revents);
