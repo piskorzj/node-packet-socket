@@ -110,6 +110,25 @@ NAN_METHOD(Wrapper::New) {
 	}
 }
 
+void Wrapper::ReadReadyCallback(void *data) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onRecvCallback));
+	callback.Call(0, 0);
+}
+void Wrapper::WriteReadyCallback(void *data) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	callback.Call(0, 0);
+}
+
+void Wrapper::ErrorCallback(void *data, const char *error) {
+	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	const int argc = 1;
+	v8::Local<v8::Value> argv[argc] = {Nan::New(error).ToLocalChecked()};
+	callback.Call(argc, argv);
+}
+
 void Wrapper::ParseMembershipArguments(
 			Nan::NAN_METHOD_ARGS_TYPE info,
 			Socket::MembershipType *type,
