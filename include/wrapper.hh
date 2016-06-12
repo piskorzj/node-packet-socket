@@ -13,6 +13,7 @@ class Wrapper : public Nan::ObjectWrap {
 
 	Nan::Persistent<v8::Function> onSendCallback;
 	Nan::Persistent<v8::Function> onRecvCallback;
+	Nan::Persistent<v8::Function> onErrorCallback;
 
 	Socket *socket;
 	Poller *poller;

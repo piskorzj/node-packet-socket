@@ -71,6 +71,24 @@ TEST(WrapperInit, ConstructShouldFailOnMissingOnSendPropery) {
 	}
 }
 
+TEST(WrapperInit, ConstructShouldFailOnMissingOnErrorPropery) {
+	const int argc = 1;
+	v8::Local<v8::Object> options = Nan::New<v8::Object>();
+	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
+	Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::Null());
+	Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::Null());
+	v8::Local<v8::Value> argv[argc] = { options };
+	Wrapper::Init(Nan::GetCurrentContext()->Global());
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(
+					Nan::GetCurrentContext()->Global(),
+					"Wrapper", 1, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Constructor didn't threw");
+	}
+}
+
 TEST(WrapperInit, ConstructShouldFailOnInvalidDevicePropery) {
 	const int argc = 1;
 	v8::Local<v8::Object> options = Nan::New<v8::Object>();
@@ -128,6 +146,25 @@ TEST(WrapperInit, ConstructShouldFailOnInvalidOnSendPropery) {
 	}
 }
 
+TEST(WrapperInit, ConstructShouldFailOnInvalidOnErrorPropery) {
+	const int argc = 1;
+	v8::Local<v8::Object> options = Nan::New<v8::Object>();
+	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New("rfm0").ToLocalChecked());
+	Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(Noop));
+	Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(Noop));
+	Nan::Set(options, Nan::New("onError").ToLocalChecked(), Nan::Null());
+	v8::Local<v8::Value> argv[argc] = { options };
+	Wrapper::Init(Nan::GetCurrentContext()->Global());
+
+	Nan::TryCatch catchBlock;
+	Nan::MakeCallback(
+					Nan::GetCurrentContext()->Global(),
+					"Wrapper", 1, argv);
+	if(!catchBlock.HasCaught()) {
+		FAIL("Constructor didn't threw");
+	}
+}
+
 TEST(WrapperInit, ConstructShouldFailOnSocketCreation) {
 	const char * expected_device = "rfm0";
 	const int argc = 1;
@@ -135,6 +172,7 @@ TEST(WrapperInit, ConstructShouldFailOnSocketCreation) {
 	Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New(expected_device).ToLocalChecked());
 	Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(Noop));
 	Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(Noop));
+	Nan::Set(options, Nan::New("onError").ToLocalChecked(), Nan::New<v8::Function>(Noop));
 	v8::Local<v8::Value> argv[argc] = { options };
 	Wrapper::Init(Nan::GetCurrentContext()->Global());
 
@@ -159,6 +197,10 @@ NAN_METHOD(OnSendCallback) {
 	mock().actualCall("OnSendCallback");
 }
 
+NAN_METHOD(OnErrorCallback) {
+	mock().actualCall("OnErrorCallback");
+}
+
 TEST_GROUP(WrapperUsage) {
 	Nan::Persistent<v8::Object> wrapped_obj;
 	Wrapper *unwrapped;
@@ -170,6 +212,7 @@ TEST_GROUP(WrapperUsage) {
 		Nan::Set(options, Nan::New("device").ToLocalChecked(), Nan::New(expected_device).ToLocalChecked());
 		Nan::Set(options, Nan::New("onRecv").ToLocalChecked(), Nan::New<v8::Function>(OnRecvCallback));
 		Nan::Set(options, Nan::New("onSend").ToLocalChecked(), Nan::New<v8::Function>(OnSendCallback));
+		Nan::Set(options, Nan::New("onError").ToLocalChecked(), Nan::New<v8::Function>(OnErrorCallback));
 		v8::Local<v8::Value> argv[argc] = { options };
 		Wrapper::Init(Nan::GetCurrentContext()->Global());
 
