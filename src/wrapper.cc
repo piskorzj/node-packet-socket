@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 Wrapper::Wrapper(v8::Local<v8::Object> options) {
+	Nan::HandleScope scope;
 
 	v8::Local<v8::Value> options_device_value = Nan::Get(options, Nan::New("device").ToLocalChecked()).ToLocalChecked();
 	if(!options_device_value->IsString()) {
@@ -111,17 +112,20 @@ NAN_METHOD(Wrapper::New) {
 }
 
 void Wrapper::ReadReadyCallback(void *data) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
 	Nan::Callback callback(Nan::New<v8::Function>(wrap->onRecvCallback));
 	callback.Call(0, 0);
 }
 void Wrapper::WriteReadyCallback(void *data) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
 	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
 	callback.Call(0, 0);
 }
 
 void Wrapper::ErrorCallback(void *data, const char *error) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
 	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
 	const int argc = 1;
