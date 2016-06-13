@@ -282,7 +282,7 @@ NAN_METHOD(Wrapper::Send) {
 
 NAN_METHOD(Wrapper::PauseSending) {
 	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
-	obj->poller->set_events(Poller::WRITE_EVENT);
+	obj->poller->set_events(Poller::READ_EVENT);
 }
 
 NAN_METHOD(Wrapper::ResumeSending) {
