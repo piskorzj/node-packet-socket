@@ -62,6 +62,9 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
 			Nan::GetFunction(tpl).ToLocalChecked());
+
+	Nan::Set(target, Nan::New("PROMISCIOUS").ToLocalChecked(), Nan::New(Socket::PROMISCIOUS));
+	Nan::Set(target, Nan::New("ALL_MULTICAST").ToLocalChecked(), Nan::New(Socket::ALL_MULTICAST));
 }
 
 NAN_METHOD(Wrapper::New) {
