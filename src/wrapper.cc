@@ -26,7 +26,7 @@ Wrapper::Wrapper(v8::Local<v8::Object> options) {
 
 	onRecvCallback.Reset(options_onRecv_value.As<v8::Function>());
 	onSendCallback.Reset(options_onSend_value.As<v8::Function>());
-	onSendCallback.Reset(options_onError_value.As<v8::Function>());
+	onErrorCallback.Reset(options_onError_value.As<v8::Function>());
 
 	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
@@ -127,7 +127,7 @@ void Wrapper::WriteReadyCallback(void *data) {
 void Wrapper::ErrorCallback(void *data, const char *error) {
 	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
-	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onErrorCallback));
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(error).ToLocalChecked()};
 	callback.Call(argc, argv);
