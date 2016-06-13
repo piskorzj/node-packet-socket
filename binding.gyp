@@ -2,7 +2,9 @@
   "targets": [
     {
       "target_name": "packet_socket_addon",
-      "sources": [ "src/wrapper.cc" ],
+      "sources": [ "src/wrapper.cc",
+                   "src/socket.cc",
+                   "src/poller.cc"],
       "include_dirs" : [
           "<!(node -e \"require('nan')\")",
           "include"

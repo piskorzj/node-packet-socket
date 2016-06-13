@@ -722,7 +722,7 @@ TEST(WrapperUsage, PauseSendingShouldCallPollersSetEvent) {
 	const int argc = 0;
 	v8::Local<v8::Value> argv[argc] = {};
 
-	mock().expectOneCall("set_events").withIntParameter("events", Poller::WRITE_EVENT);
+	mock().expectOneCall("set_events").withIntParameter("events", Poller::READ_EVENT);
 
 	Nan::TryCatch catchBlock;
 	Nan::MakeCallback(wrap, "PauseSending", argc, argv);

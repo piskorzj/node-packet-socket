@@ -2,6 +2,7 @@
 #include <stdexcept>
 
 Wrapper::Wrapper(v8::Local<v8::Object> options) {
+	Nan::HandleScope scope;
 
 	v8::Local<v8::Value> options_device_value = Nan::Get(options, Nan::New("device").ToLocalChecked()).ToLocalChecked();
 	if(!options_device_value->IsString()) {
@@ -25,7 +26,7 @@ Wrapper::Wrapper(v8::Local<v8::Object> options) {
 
 	onRecvCallback.Reset(options_onRecv_value.As<v8::Function>());
 	onSendCallback.Reset(options_onSend_value.As<v8::Function>());
-	onSendCallback.Reset(options_onError_value.As<v8::Function>());
+	onErrorCallback.Reset(options_onError_value.As<v8::Function>());
 
 	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
@@ -61,6 +62,9 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	constructor.Reset(Nan::GetFunction(tpl).ToLocalChecked());
 	Nan::Set(target, Nan::New("Wrapper").ToLocalChecked(),
 			Nan::GetFunction(tpl).ToLocalChecked());
+
+	Nan::Set(target, Nan::New("PROMISCIOUS").ToLocalChecked(), Nan::New(Socket::PROMISCIOUS));
+	Nan::Set(target, Nan::New("ALL_MULTICAST").ToLocalChecked(), Nan::New(Socket::ALL_MULTICAST));
 }
 
 NAN_METHOD(Wrapper::New) {
@@ -111,19 +115,22 @@ NAN_METHOD(Wrapper::New) {
 }
 
 void Wrapper::ReadReadyCallback(void *data) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
 	Nan::Callback callback(Nan::New<v8::Function>(wrap->onRecvCallback));
 	callback.Call(0, 0);
 }
 void Wrapper::WriteReadyCallback(void *data) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
 	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
 	callback.Call(0, 0);
 }
 
 void Wrapper::ErrorCallback(void *data, const char *error) {
+	Nan::HandleScope scope;
 	Wrapper *wrap = reinterpret_cast<Wrapper *>(data);
-	Nan::Callback callback(Nan::New<v8::Function>(wrap->onSendCallback));
+	Nan::Callback callback(Nan::New<v8::Function>(wrap->onErrorCallback));
 	const int argc = 1;
 	v8::Local<v8::Value> argv[argc] = {Nan::New(error).ToLocalChecked()};
 	callback.Call(argc, argv);
@@ -278,7 +285,7 @@ NAN_METHOD(Wrapper::Send) {
 
 NAN_METHOD(Wrapper::PauseSending) {
 	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
-	obj->poller->set_events(Poller::WRITE_EVENT);
+	obj->poller->set_events(Poller::READ_EVENT);
 }
 
 NAN_METHOD(Wrapper::ResumeSending) {
