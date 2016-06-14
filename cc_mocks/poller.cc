@@ -2,7 +2,7 @@
 #include "poller.hh"
 
 
-Poller::Poller(
+UvPoller::UvPoller(
   int descriptor,
   void (*read_ready_callback)(void *data),
   void (*write_ready_callback)(void *data),
@@ -10,14 +10,14 @@ Poller::Poller(
   void *external_data
 ) {}
 
-Poller::~Poller(void) {}
+UvPoller::~UvPoller(void) {}
 
-void Poller::on_close(uv_handle_t *handle) {}
+void UvPoller::on_close(uv_handle_t *handle) {}
 
-void Poller::io_event_wrapper(uv_poll_t *watcher, int status, int revents) {}
+void UvPoller::io_event_wrapper(uv_poll_t *watcher, int status, int revents) {}
 
-void Poller::io_event(int status, int revents) {}
+void UvPoller::io_event(int status, int revents) {}
 
-void Poller::set_events(PollerEvents events) {
+void UvPoller::set_events(PollerEvents events) {
   mock().actualCall("set_events").withIntParameter("events", events);
 }
