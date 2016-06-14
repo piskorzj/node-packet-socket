@@ -30,7 +30,7 @@ Wrapper::Wrapper(v8::Local<v8::Object> options) {
 
 	Nan::Utf8String device_string(options_device_value);
 	socket = new Socket(*device_string);
-	poller = new Poller(socket->get_descriptor(),
+	poller = new UvPoller(socket->get_descriptor(),
 		Wrapper::ReadReadyCallback,
 		Wrapper::WriteReadyCallback,
 		Wrapper::ErrorCallback,

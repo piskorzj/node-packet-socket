@@ -11,15 +11,27 @@ public:
     WRITE_EVENT = UV_WRITABLE,
     RW_EVENT = UV_READABLE | UV_WRITABLE
   };
+  virtual ~Poller(void) = 0;
+  virtual void set_events(PollerEvents events) = 0;
+};
 
-  Poller(
+class NullPoller : public Poller {
+public:
+  NullPoller(void);
+  virtual ~NullPoller(void);
+  void set_events(PollerEvents events);
+};
+
+class UvPoller : public Poller {
+public:
+  UvPoller(
     int descriptor,
     void (*read_ready_callback)(void *data),
     void (*write_ready_callback)(void *data),
     void (*error_callback)(void *data, const char *error),
     void *external_data
   );
-  virtual ~Poller(void);
+  virtual ~UvPoller(void);
 
   void set_events(PollerEvents events);
 
