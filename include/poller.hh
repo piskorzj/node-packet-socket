@@ -11,7 +11,7 @@ public:
     WRITE_EVENT = UV_WRITABLE,
     RW_EVENT = UV_READABLE | UV_WRITABLE
   };
-  virtual ~Poller(void) = 0;
+  virtual ~Poller(void) {};
   virtual void set_events(PollerEvents events) = 0;
 };
 
