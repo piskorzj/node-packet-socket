@@ -18,6 +18,6 @@ void UvPoller::io_event_wrapper(uv_poll_t *watcher, int status, int revents) {}
 
 void UvPoller::io_event(int status, int revents) {}
 
-void Poller::set_events(PollerEvents events) {
+void UvPoller::set_events(PollerEvents events) {
   mock().actualCall("set_events").withIntParameter("events", events);
 }
