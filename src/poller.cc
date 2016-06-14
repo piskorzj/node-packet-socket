@@ -48,3 +48,7 @@ void UvPoller::set_events(PollerEvents events) {
   if(events)
     uv_poll_start(uv_poll, events, UvPoller::io_event_wrapper);
 }
+
+NullPoller::NullPoller(void) {}
+NullPoller::~NullPoller(void) {}
+void NullPoller::set_events(PollerEvents events) {}

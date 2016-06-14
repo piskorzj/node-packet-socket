@@ -15,6 +15,13 @@ public:
   virtual void set_events(PollerEvents events) = 0;
 };
 
+class NullPoller : public Poller {
+public:
+  NullPoller(void);
+  virtual ~NullPoller(void);
+  void set_events(PollerEvents events);
+};
+
 class UvPoller : public Poller {
 public:
   UvPoller(
