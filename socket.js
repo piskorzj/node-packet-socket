@@ -56,7 +56,9 @@ function Socket(options) {
 };
 util.inherits(Socket, events.EventEmitter);
 
-//TODO Add closing socket....
+Socket.prototype.close = function() {
+	this.wrap.Close();
+};
 
 Socket.prototype.joinMC = function(addrortype) {
 	try {
