@@ -51,6 +51,8 @@ NAN_MODULE_INIT(Wrapper::Init) {
 	tpl->SetClassName(Nan::New("Wrapper").ToLocalChecked());
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
+	Nan::SetPrototypeMethod(tpl, "Close", Close);
+
 	Nan::SetPrototypeMethod(tpl, "AddMembership", AddMembership);
 	Nan::SetPrototypeMethod(tpl, "DropMembership", DropMembership);
 	Nan::SetPrototypeMethod(tpl, "Send", Send);
@@ -112,6 +114,12 @@ NAN_METHOD(Wrapper::New) {
 		}
 		info.GetReturnValue().Set(constructed_object.ToLocalChecked());
 	}
+}
+
+NAN_METHOD(Wrapper::Close) {
+	Wrapper *obj = Nan::ObjectWrap::Unwrap<Wrapper>(info.Holder());
+	delete obj->poller;
+	obj->poller = new NullPoller;
 }
 
 void Wrapper::ReadReadyCallback(void *data) {
