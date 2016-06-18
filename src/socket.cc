@@ -34,6 +34,13 @@ Socket::Socket(const char * device) : device_name(device) {
 			throw std::runtime_error(strerror(errno));
 		memcpy(hardware_address, ifr.ifr_hwaddr.sa_data, 6);
 
+		//bind to interface
+		struct sockaddr_ll bindaddr;
+		bindaddr.sll_family = AF_PACKET;
+		bindaddr.sll_ifindex = interface_index;
+		bindaddr.sll_protocol = htons(ETH_P_ALL);
+		if(bind(socket_descriptor, (struct sockaddr *) &bindaddr, sizeof(bindaddr)) == -1)
+			throw std::runtime_error(strerror(errno));
 
 	} catch(...) {
 		close(socket_descriptor);

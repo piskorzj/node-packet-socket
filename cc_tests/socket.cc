@@ -42,6 +42,13 @@ extern "C" {
 				->withOutputParameter("hardware_address", ifr->ifr_hwaddr.sa_data);
 		return mock_c()->returnIntValueOrDefault(0);
 	}
+	int bind(int __fd, const struct sockaddr *__addr, socklen_t __len) {
+		mock_c()->actualCall("bind")
+				->withIntParameters("fd", __fd)
+				->withMemoryBufferParameter("addr", (const unsigned char *)__addr, __len)
+				->withUnsignedIntParameters("addr_len", __len);
+		return mock_c()->returnIntValueOrDefault(0);
+	}
 	ssize_t sendto (int __fd, const void *__buf, size_t __n,
 			       int __flags, __CONST_SOCKADDR_ARG __addr,
 			       socklen_t __addr_len) {
@@ -130,6 +137,21 @@ TEST(SocketInit, ConstructorShouldFailOnGettingHardwareAddressFail) {
 				.ignoreOtherParameters().andReturnValue(-1);
 	CHECK_THROWS(std::runtime_error, new Socket("rfm0"));
 }
+TEST(SocketInit, ConstructorShouldFailOnBindFail) {
+	mock().expectOneCall("socket").ignoreOtherParameters().andReturnValue(socket_descriptor);
+	mock().expectOneCall("close").withIntParameter("fd", socket_descriptor).andReturnValue(0);
+	mock().expectNCalls(2, "fcntl").ignoreOtherParameters().andReturnValue(0);
+	mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFINDEX)
+			.ignoreOtherParameters().andReturnValue(0);
+	char address[] = {(char)0xde, (char)0xad, (char)0, (char)0, (char)0xbe, (char)0xef};
+	mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFHWADDR)
+			.withOutputParameterReturning("hardware_address", address, 6)
+			.ignoreOtherParameters().andReturnValue(0);
+	mock().expectOneCall("bind").withIntParameter("fd", socket_descriptor)
+			.ignoreOtherParameters().andReturnValue(-1);
+	CHECK_THROWS(std::runtime_error, new Socket("rfm0"));
+}
+
 TEST(SocketInit, ConstructorShouldNotThrowOnSuccess) {
 	mock().expectOneCall("socket").ignoreOtherParameters().andReturnValue(socket_descriptor);
 	mock().expectOneCall("close").withIntParameter("fd", socket_descriptor).andReturnValue(0);
@@ -139,6 +161,8 @@ TEST(SocketInit, ConstructorShouldNotThrowOnSuccess) {
 	char address[] = {(char)0xde, (char)0xad, (char)0, (char)0, (char)0xbe, (char)0xef};
 	mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFHWADDR)
 			.withOutputParameterReturning("hardware_address", address, 6)
+			.ignoreOtherParameters().andReturnValue(0);
+	mock().expectOneCall("bind").withIntParameter("fd", socket_descriptor)
 			.ignoreOtherParameters().andReturnValue(0);
 	try {
 		Socket("rfm0");
@@ -166,6 +190,8 @@ TEST_GROUP(SocketUsage) {
 				.ignoreOtherParameters().andReturnValue(0);
 		mock().expectOneCall("ioctl").withIntParameter("request", SIOCGIFHWADDR)
 				.withOutputParameterReturning("hardware_address", address, 6)
+				.ignoreOtherParameters().andReturnValue(0);
+		mock().expectOneCall("bind").withIntParameter("fd", socket_descriptor)
 				.ignoreOtherParameters().andReturnValue(0);
 		socket = new Socket("rfm0");
 	}

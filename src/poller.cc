@@ -32,7 +32,7 @@ void UvPoller::io_event_wrapper(uv_poll_t *watcher, int status, int revents) {
 
 void UvPoller::io_event(int status, int revents) {
   if(status) {
-    error_callback(external_data, uv_strerror(-status));
+    error_callback(external_data, uv_strerror(status));
   } else {
     if(revents & UV_READABLE)
       read_ready_callback(external_data);
