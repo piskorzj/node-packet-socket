@@ -1,6 +1,6 @@
 {
   "name": "packet-socket",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Node.js package implementing socket for receiving OSI layer 2 packets",
   "main": "socket.js",
   "scripts": {
